@@ -5,7 +5,7 @@
 import { PHASES as P } from '../shared/protocol.js';
 import { ROUND_PHASES, REVEALED_PHASES, roleOf, framerIndexOf, votesProgress } from './game.js';
 
-const TIMER_FOR_PHASE = { [P.ROLES]: 'pickTarget', [P.ANSWERING]: 'answering', [P.VOTING]: 'voting' };
+const TIMER_FOR_PHASE = { [P.ROLES]: 'roles', [P.ANSWERING]: 'answering', [P.VOTING]: 'voting' };
 
 const publicPlayers = (state) =>
   Object.values(state.players)
@@ -15,7 +15,7 @@ const publicPlayers = (state) =>
 function revealedRound(round) {
   return {
     question: round.question,
-    framers: round.framers.map(({ id, targetId, answer }) => ({ id, targetId, answer })),
+    framers: round.framers.map(({ id, answer }) => ({ id, answer })),
     vandalId: round.vandalId,
     accompliceId: round.accompliceId,
     votes: round.votes,
@@ -42,8 +42,7 @@ function playerRoundView(state, id, role) {
   if (role === 'framer') {
     const f = round.framers[framerIndexOf(round, id)];
     view.secondFramerExists = round.framers.length > 1;
-    view.targetOptions = f.targetOptions;
-    view.targetId = f.targetId;
+    view.ready = f.ready;
     if (answeringOrLater) {
       view.question = round.question;
       view.myAnswer = f.answer;
@@ -58,7 +57,7 @@ function playerRoundView(state, id, role) {
   }
 
   if (role === 'vandal' || role === 'accomplice') {
-    view.framers = round.framers.map(({ id: fid, targetId }) => ({ id: fid, targetId }));
+    view.framers = round.framers.map(({ id: fid }) => ({ id: fid }));
   }
   if (phase === P.ANSWERING) view.myMessages = myMessages(round, id);
   if (voting) {
@@ -86,7 +85,7 @@ function adminView(state) {
     view.live = {
       addOns: round.config.addOns,
       framerCount: round.framers.length,
-      targetsPicked: round.framers.filter((f) => f.targetId).length,
+      framersReady: round.framers.filter((f) => f.ready).length,
       answersSubmitted: round.framers.filter((f) => f.answer).length,
       messageCount: round.messages.length,
       ...votesProgress(round),

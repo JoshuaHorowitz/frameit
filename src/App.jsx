@@ -5,7 +5,7 @@ import {
   JoinScreen,
   LobbyScreen,
   StandingsScreen,
-  FramerPickScreen,
+  FramerIntroScreen,
   RoleBriefScreen,
   FramerAnswerScreen,
   TeaseScreen,
@@ -121,7 +121,7 @@ function PlayerApp({ game }) {
     case 'setup':
       return <StandingsScreen game={game} title="Scores" subtitle="The next round is being set up." />;
     case 'roles':
-      if (role === 'framer') return <FramerPickScreen game={game} />;
+      if (role === 'framer') return <FramerIntroScreen game={game} />;
       if (role === 'vandal' || role === 'accomplice') return <RoleBriefScreen game={game} role={role} />;
       if (role === 'waiting') return <Waiting game={game} title="You'll join next round!" body="Watch the chaos for now." />;
       return <Waiting game={game} title="Get ready…" body="Someone is about to be the Framer. Watch everyone's faces." />;

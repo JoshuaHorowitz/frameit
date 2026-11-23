@@ -31,6 +31,14 @@ const fail = (code, message) => {
 
 // ---------- state ----------
 
+// Bring a saved state up to date with the current settings shape, so a game
+// stored by an older deploy keeps working (unknown keys are dropped, new ones
+// get their defaults).
+export function migrateState(state) {
+  state.settings = mergeSettings(DEFAULT_SETTINGS, state.settings);
+  return state;
+}
+
 export function createState(settings = {}) {
   return {
     phase: P.LOBBY,
@@ -65,14 +73,6 @@ const lowestScore = (state) => {
   return scores.length ? Math.min(...scores) : 0;
 };
 
-function shuffle(list, random) {
-  const a = [...list];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
 const pickOne = (list, random) => list[Math.floor(random() * list.length)];
 
 export function framerIndexOf(round, id) {
@@ -241,16 +241,7 @@ function startRound(state, now, random) {
   if (voterIds.length === 0) fail('no_voters', 'This setup leaves nobody to vote.');
 
   const framerSlots = slots.filter((s) => s.kind === 'framer');
-  round.framers = framerSlots.map((s) => {
-    const candidates = active.filter((id) => id !== s.id);
-    return {
-      id: s.id,
-      targetOptions: shuffle(candidates, random).slice(0, state.settings.targetOptions),
-      targetId: null,
-      draft: '',
-      answer: '',
-    };
-  });
+  round.framers = framerSlots.map((s) => ({ id: s.id, ready: false, draft: '', answer: '' }));
   round.vandalId = slots.find((s) => s.kind === 'vandal')?.id ?? null;
   round.accompliceId = slots.find((s) => s.kind === 'accomplice')?.id ?? null;
   round.voterIds = voterIds;
@@ -261,15 +252,12 @@ function startRound(state, now, random) {
   };
   state.notice = null;
   state.phase = P.ROLES;
-  setDeadline(state, now, state.settings.timers.pickTarget);
+  setDeadline(state, now, state.settings.timers.roles);
 }
 
 function advance(state, now, random) {
   const round = state.round;
   if (state.phase === P.ROLES) {
-    for (const f of round.framers) {
-      if (!f.targetId) f.targetId = pickOne(f.targetOptions, random);
-    }
     state.phase = P.ANSWERING;
     setDeadline(state, now, state.settings.timers.answering);
   } else if (state.phase === P.ANSWERING) {
@@ -328,12 +316,12 @@ function requireFramer(state, actor) {
 const cleanText = (text, max) => String(text ?? '').trim().slice(0, max);
 
 const playerActions = {
-  pickTarget(state, actor, { targetId }, now, random) {
+  // The Framer has read their briefing; once every Framer is ready the
+  // question appears, without waiting for the rest of the roles timer.
+  ready(state, actor, _payload, now, random) {
     requirePhase(state, P.ROLES);
-    const framer = requireFramer(state, actor);
-    if (!framer.targetOptions.includes(targetId)) fail('bad_target', 'Pick one of your options.');
-    framer.targetId = targetId;
-    if (state.round.framers.every((f) => f.targetId)) advance(state, now, random);
+    requireFramer(state, actor).ready = true;
+    if (state.round.framers.every((f) => f.ready)) advance(state, now, random);
   },
 
   draftAnswer(state, actor, { text }) {

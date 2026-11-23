@@ -25,7 +25,7 @@ function setupGame({ now = 1_000_000, random = seeded() } = {}) {
   return { state, act, random, now };
 }
 
-// Maya frames Noah with Sam as Vandal: the mockup round.
+// Maya is the Framer with Sam as Vandal: the mockup round.
 function startMockupRound(ctx) {
   const { act } = ctx;
   act(ADMIN, 'configureRound', {
@@ -33,9 +33,7 @@ function startMockupRound(ctx) {
     roles: { framers: ['maya'], vandal: 'sam' },
   });
   act(ADMIN, 'startRound');
-  const maya = ctx.state.round.framers[0];
-  if (!maya.targetOptions.includes('noah')) maya.targetOptions[0] = 'noah'; // keep the test independent of shuffling
-  act(as('maya'), 'pickTarget', { targetId: 'noah' });
+  act(as('maya'), 'ready');
 }
 
 test('joining: names normalise, the admin name opens the admin view', () => {
@@ -90,11 +88,11 @@ test('full round: roles -> answering -> voting -> review -> recap -> scoreboard'
   act(as('dana'), 'castVote', { answerIndex: 0, suspectId: 'maya' }, voting);
   assert.equal(state.phase, 'review', 'voting ends early once every vote and guess is in');
 
-  assert.equal(state.round.result.deltas.maya, 10);
+  assert.equal(state.round.result.deltas.maya, 7);
   assert.equal(state.players.maya.score, 0, 'scores are applied at reveal, not review');
   act(ADMIN, 'reveal');
   assert.equal(state.phase, 'recap');
-  assert.equal(state.players.maya.score, 10);
+  assert.equal(state.players.maya.score, 7);
   assert.equal(state.players.sam.score, -2);
   assert.equal(state.roundNumber, 1);
   act(ADMIN, 'showScoreboard');
@@ -136,15 +134,35 @@ test('a setup with nobody left to vote is refused', () => {
   assert.equal(state.phase, 'setup');
 });
 
-test('a Framer who never picks gets a random target from their options', () => {
+test('the roles briefing ends when the Framer is ready, or when its timer runs out', () => {
   const ctx = setupGame();
   ctx.act(ADMIN, 'configureRound', { roles: { framers: ['maya'] } });
   ctx.act(ADMIN, 'startRound');
-  tick(ctx.state, ctx.now + 15_000, ctx.random);
-  const maya = ctx.state.round.framers[0];
+  assert.equal(ctx.state.phase, 'roles');
+  assert.throws(() => ctx.act(as('noah'), 'ready'), { code: 'not_framer' });
+  tick(ctx.state, ctx.now + 8_000, ctx.random);
   assert.equal(ctx.state.phase, 'answering');
-  assert.ok(maya.targetOptions.includes(maya.targetId));
-  assert.equal(maya.targetOptions.length, 3);
+
+  ctx.act(ADMIN, 'cancelRound');
+  ctx.act(ADMIN, 'configureRound', { addOns: { twoFramers: true }, roles: { framers: ['maya', 'sam'] } });
+  ctx.act(ADMIN, 'startRound');
+  ctx.act(as('maya'), 'ready');
+  assert.equal(ctx.state.phase, 'roles', 'waits for both Framers');
+  ctx.act(as('sam'), 'ready');
+  assert.equal(ctx.state.phase, 'answering');
+});
+
+test('a game saved with old settings is migrated to the current shape', async () => {
+  const { migrateState } = await import('../server/game.js');
+  const saved = createState();
+  saved.settings = { timers: { pickTarget: 15, answering: 45, voting: 60 }, targetOptions: 3, points: { voteOnTarget: 2, catchFramer: 4 } };
+  migrateState(saved);
+  assert.equal(saved.settings.timers.roles, 8);
+  assert.equal(saved.settings.timers.answering, 45);
+  assert.equal(saved.settings.timers.pickTarget, undefined);
+  assert.equal(saved.settings.targetOptions, undefined);
+  assert.equal(saved.settings.points.catchFramer, 4);
+  assert.equal(saved.settings.points.voteOnTarget, undefined);
 });
 
 test('an unsubmitted draft is used at the deadline; an empty one cancels the round', () => {
