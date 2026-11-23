@@ -20,6 +20,26 @@ const saveName = (name) => {
   }
 };
 
+// A connection id that works on plain-http LAN addresses too. Phones opening
+// http://192.168.x.x:5173 are not a "secure context", so crypto.randomUUID()
+// is missing there; partysocket would otherwise try to use it.
+function connectionId() {
+  const key = 'frameit:conn';
+  try {
+    const existing = sessionStorage.getItem(key);
+    if (existing) return existing;
+  } catch {
+    /* ignore */
+  }
+  const id = `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  try {
+    sessionStorage.setItem(key, id);
+  } catch {
+    /* ignore */
+  }
+  return id;
+}
+
 // Owns the WebSocket. Returns the latest private view from the server,
 // a send() for actions, and the offset between this phone's clock and the server's.
 export function useGame() {
@@ -27,7 +47,7 @@ export function useGame() {
   const [view, setView] = useState(null);
   const [error, setError] = useState(null);
   const [status, setStatus] = useState('idle'); // idle | connecting | open | closed | kicked | replaced
-  const [clockOffset, setClockOffset] = useState(0);
+  const [clockOffset, setClockOffset] = useState(null);
   const socket = useRef(null);
 
   useEffect(() => {
@@ -37,6 +57,7 @@ export function useGame() {
       host: import.meta.env.VITE_SERVER_HOST || window.location.host,
       party: 'game-room',
       room: ROOM,
+      id: connectionId(),
     });
     ws.addEventListener('open', () => {
       setStatus('open');
@@ -50,7 +71,13 @@ export function useGame() {
       } catch {
         return;
       }
-      if (msg.serverNow) setClockOffset(msg.serverNow - Date.now());
+      if (msg.serverNow) {
+        // Each sample is (true offset - network delay), so the largest sample
+        // is the most accurate. Keeping it stops the bar jumping on every update;
+        // a big change (e.g. the phone's clock was adjusted) resets it.
+        const sample = msg.serverNow - Date.now();
+        setClockOffset((prev) => (prev == null || Math.abs(sample - prev) > 2000 ? sample : Math.max(prev, sample)));
+      }
       if (msg.type === 'state') {
         setView(msg.view);
         saveName(name);
@@ -90,19 +117,30 @@ export function useGame() {
     setStatus('idle');
   }, []);
 
-  return { name, view, send, error, clearError: () => setError(null), status, clockOffset, joinAs, leave };
+  return { name, view, send, error, clearError: () => setError(null), status, clockOffset: clockOffset ?? 0, joinAs, leave };
 }
 
-// Seconds left on the current timer, ticking locally between server updates.
+// Time left on the current timer. Re-renders every animation frame while a
+// timer is running, so the progress bar drains smoothly instead of in
+// one-second steps. `ms` is exact; `seconds` is what the clock shows.
 export function useCountdown(view, clockOffset) {
   const [now, setNow] = useState(() => Date.now());
+  const running = Boolean(view && view.deadline != null && view.pausedRemaining == null);
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 250);
-    return () => clearInterval(id);
-  }, []);
+    if (!running) return undefined;
+    let frame;
+    const loop = () => {
+      setNow(Date.now());
+      frame = requestAnimationFrame(loop);
+    };
+    frame = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frame);
+  }, [running]);
   if (!view) return null;
-  if (view.pausedRemaining != null) return { seconds: Math.ceil(view.pausedRemaining / 1000), paused: true };
+  if (view.pausedRemaining != null) {
+    return { ms: view.pausedRemaining, seconds: Math.ceil(view.pausedRemaining / 1000), paused: true };
+  }
   if (view.deadline == null) return null;
   const ms = Math.max(0, view.deadline - (now + clockOffset));
-  return { seconds: Math.ceil(ms / 1000), paused: false };
+  return { ms, seconds: Math.ceil(ms / 1000), paused: false };
 }

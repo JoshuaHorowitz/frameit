@@ -45,7 +45,7 @@ export function TopBar({ left, game, showBar = true }) {
       </div>
       {t && showBar && total > 0 && (
         <div className="bar" aria-hidden="true">
-          <div style={{ width: `${Math.min(100, (t.seconds / total) * 100)}%` }} />
+          <div style={{ width: `${Math.min(100, (t.ms / (total * 1000)) * 100)}%` }} />
         </div>
       )}
     </>
