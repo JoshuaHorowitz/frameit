@@ -343,6 +343,11 @@ export function AdminScoreboard({ game, final = false }) {
           </div>
         ))}
       </div>
+      {final && (
+        <div className="stack push-down">
+          <NewGameButton send={send} />
+        </div>
+      )}
       {!final && (
         <div className="stack push-down">
           <button className="btn secondary" onClick={() => window.confirm('End the game and show final scores?') && send('endGame')}>
@@ -429,6 +434,25 @@ export function AdminSettings({ game, back }) {
       </div>
       <h1 className="h2">Players</h1>
       <PlayerAdminList game={game} />
+      <h1 className="h2" style={{ marginTop: 12 }}>Start fresh</h1>
+      <p className="small">
+        Removes every player, score and round and goes back to an empty lobby. Your settings and added questions are kept.
+      </p>
+      <NewGameButton send={send} />
     </Screen>
+  );
+}
+
+function NewGameButton({ send }) {
+  return (
+    <button
+      className="btn danger"
+      onClick={() =>
+        window.confirm('Start a new game? This removes every player and score, and sends all phones back to the Join screen.') &&
+        send('resetGame')
+      }
+    >
+      Start a new game
+    </button>
   );
 }

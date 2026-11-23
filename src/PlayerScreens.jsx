@@ -3,7 +3,7 @@ import { Screen, TopBar, Logo, Avatar, PlayerGrid, Scoreboard, Waiting, nameOf, 
 
 // ---------- Join ----------
 
-export function JoinScreen({ onJoin, status, playerCount }) {
+export function JoinScreen({ onJoin, status, playerCount, message }) {
   const [name, setName] = useState('');
   const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
   const standalone = window.matchMedia?.('(display-mode: standalone)').matches;
@@ -39,6 +39,7 @@ export function JoinScreen({ onJoin, status, playerCount }) {
         <button className="btn" type="submit" disabled={!name.trim() || status === 'connecting'}>
           {status === 'connecting' ? 'Joining…' : 'Join the party'}
         </button>
+        {message && <p className="body center" style={{ color: 'var(--gold)' }}>{message}</p>}
         {playerCount != null && <p className="small center">{playerCount} players in the lobby</p>}
         {isIos && !standalone && <p className="small center">Tip: Share → Add to Home Screen to play full-screen.</p>}
       </form>
