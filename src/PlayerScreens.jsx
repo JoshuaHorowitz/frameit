@@ -19,7 +19,7 @@ export function JoinScreen({ onJoin, status, playerCount, message }) {
           <Logo />
         </h1>
         <p className="body">
-          Answer it. Frame someone.
+          Answer honestly. Guess who.
           <br />
           Don&apos;t crack.
         </p>
@@ -108,15 +108,15 @@ export function FramerIntroScreen({ game }) {
         </span>
         <h1 className="h1" style={{ fontSize: 40 }}>You&apos;re the Framer.</h1>
         <p className="body">
-          In a moment you&apos;ll get a question. <b style={{ color: 'var(--text)' }}>Answer it truthfully</b>, then frame it away from
-          you: make the room believe someone else wrote it.
+          In a moment you&apos;ll get a question. <b style={{ color: 'var(--text)' }}>Answer it honestly</b>. Everyone else will try to
+          work out that it was you. How well do they really know you?
         </p>
         {r.secondFramerExists && <p className="body">There&apos;s a second Framer this round. You don&apos;t know who.</p>}
       </div>
       <div className="card">
         <span className="label">How you score</span>
-        <p className="body"><b style={{ color: 'var(--gold)' }}>+1</b> for every person who guesses someone else</p>
-        <p className="body"><b style={{ color: 'var(--gold)' }}>+5</b> bonus if nobody catches you</p>
+        <p className="body"><b style={{ color: 'var(--gold)' }}>+1</b> for every person who picks you</p>
+        <p className="body">No hints or confessions, though. Let your answer speak for itself!</p>
       </div>
       <button className="btn push-down" onClick={() => send('ready')}>
         I&apos;m ready
@@ -205,7 +205,7 @@ export function FramerAnswerScreen({ game }) {
       <div className="card">
         <span className="label">The question</span>
         <h1 className="h2" style={{ fontSize: 28 }}>{r.question}</h1>
-        <label htmlFor="answer" className="small">Your answer: true for you, but don&apos;t make it obvious it&apos;s yours</label>
+        <label htmlFor="answer" className="small">Your honest answer</label>
         <textarea id="answer" className="textarea" rows={3} maxLength={200} value={text} onChange={(e) => onChange(e.target.value)} />
         <button className="btn" disabled={!text.trim() || submitted} onClick={() => send('submitAnswer', { text })}>
           {submitted ? 'Submitted ✓' : r.myAnswer ? 'Update answer' : 'Submit answer'}
@@ -328,10 +328,10 @@ export function FramerVotingScreen({ game }) {
       <Screen>
         <TopBar game={game} left={<span className="chip gold">You&apos;re the Framer</span>} />
         <div className="stack center" style={{ marginTop: '20vh' }}>
-          <h1 className="h1">Blend in.</h1>
+          <h1 className="h1">Do they know you?</h1>
           <p className="body">
-            Everyone&apos;s trying to work out who wrote your answer. Join the discussion like you&apos;re guessing too, and nudge
-            suspicion onto someone else.
+            Everyone&apos;s trying to work out who wrote your answer. Join the discussion like everyone else, but no hints! You get +1
+            for every person who picks you.
           </p>
         </div>
         <div className="push-down"><VotesIn round={r} /></div>
@@ -353,7 +353,7 @@ export function FramerVotingScreen({ game }) {
       <div className="push-down stack">
         <div className="status-row spread"><span className="small">Voting in progress</span><b>{r.votesIn} of {r.votesExpected} in</b></div>
         <p className="small center">
-          Blend in while you guess. Keep nudging suspicion onto someone else.
+          Join the discussion like everyone else, but no hints! You get +1 for every person who picks you.
         </p>
       </div>
     </Screen>
@@ -404,7 +404,7 @@ export function RevealScreen({ game }) {
     const i = r.framers.findIndex((f) => f.id === me);
     const catchers = Object.values(r.votes).filter((v) => v[i] === me).length;
     kicker = 'YOU WERE THE FRAMER';
-    headline = catchers === 0 ? 'Perfect Frame!' : `${catchers} caught you.`;
+    headline = catchers === 0 ? 'Nobody knew it was you!' : `${catchers} ${catchers === 1 ? 'person' : 'people'} knew it was you!`;
     sub = `Your answer: “${r.framers[i].answer}”`;
   } else if (role === 'vandal') {
     const caught = r.framers.some((f) => r.vandalGuesses[f.id] === me);
@@ -417,7 +417,7 @@ export function RevealScreen({ game }) {
     const myVotes = r.votes[me] ?? {};
     const right = r.framers.filter((f, i) => myVotes[i] === f.id).length;
     const voted = Object.keys(myVotes).length;
-    kicker = right > 0 ? 'NICE DETECTIVE WORK' : 'YOU GOT FRAMED';
+    kicker = right > 0 ? 'YOU KNOW THEM WELL' : 'NOT THIS TIME';
     headline = right === r.framers.length ? 'You got it!' : right > 0 ? 'Half right!' : 'Not quite.';
     sub = voted ? `You voted for ${r.framers.map((_, i) => (myVotes[i] ? n(myVotes[i]) : 'nobody')).join(' and ')}.` : "You didn't vote.";
   }

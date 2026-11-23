@@ -35,7 +35,7 @@ export function buildRecap(result, names = {}, points = DEFAULT_POINTS) {
     );
   }
   if (accomplice) {
-    intro.push(`${name(accomplice.id)} was the Accomplice, trying to take the heat off ${framerNames}.`);
+    intro.push(`${name(accomplice.id)} was the Accomplice, trying to get everyone to pick them instead of ${framerNames}.`);
   }
   paragraphs.push(intro.join(' '));
 
@@ -48,18 +48,15 @@ export function buildRecap(result, names = {}, points = DEFAULT_POINTS) {
     if (a.voteCount === 0) {
       lines.push(`Nobody voted on ${framer}'s answer.`);
     } else {
-      for (const [suspectId, voters] of Object.entries(a.onOthers)) {
-        lines.push(
-          `${names_(voters)} fell for it and voted for ${name(suspectId)}, which gives ${framer} +${p.voteOnOther}${voters.length > 1 ? ' each' : ''}.`
-        );
-      }
       if (a.catchers.length > 0) {
-        lines.push(
-          `${names_(a.catchers)} caught ${framer}: +${p.catchFramer}${a.catchers.length > 1 ? ' each' : ''}.`
-        );
-      } else if (a.perfect) {
-        lines.push(`Nobody caught ${framer}, a Perfect Frame: +${p.perfectFrame}!`);
+        const each = a.catchers.length > 1 ? ' each' : '';
+        const framerPart = a.challenged ? '' : `, and ${framer} gets +${p.framerPerCatch} for ${a.catchers.length > 1 ? 'each of them' : 'that'}`;
+        lines.push(`${names_(a.catchers)} knew it was ${framer}: +${p.catchFramer}${each}${framerPart}.`);
       }
+      for (const [suspectId, voters] of Object.entries(a.onOthers)) {
+        lines.push(`${names_(voters)} guessed ${name(suspectId)}.`);
+      }
+      if (a.catchers.length === 0) lines.push(`Nobody recognized ${framer}!`);
     }
     if (a.challenged) lines.push(`The answer was challenged, so ${framer} gets no points for it.`);
     paragraphs.push(lines.join(' '));
@@ -71,10 +68,10 @@ export function buildRecap(result, names = {}, points = DEFAULT_POINTS) {
     const vandalName = name(vandal.id);
     if (vandal.catches > 0) {
       lines.push(
-        `That earns ${vandalName} +${p.vandalPerCatch} for each player who caught ${two ? 'a Framer' : framerNames}.`
+        `That earns ${vandalName} +${p.vandalPerCatch} for each player who picked ${two ? 'a Framer' : framerNames}.`
       );
     } else {
-      lines.push(`Nobody caught ${two ? 'a Framer' : framerNames}, so ${vandalName} earns nothing as the Snitch.`);
+      lines.push(`Nobody picked ${two ? 'a Framer' : framerNames}, so ${vandalName} earns nothing as the Snitch.`);
     }
     if (vandal.reversed) {
       const catchers = joinNames(vandal.caughtBy.map(name));

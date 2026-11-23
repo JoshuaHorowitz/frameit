@@ -29,8 +29,7 @@ export const PHASES = Object.freeze({
 // catchVandal, guessVandal. Only the words on screen changed.
 export const DEFAULT_POINTS = Object.freeze({
   catchFramer: 3, // each voter who picks the Framer
-  voteOnOther: 1, // Framer, per vote on anyone but them
-  perfectFrame: 5, // Framer bonus when nobody caught them
+  framerPerCatch: 1, // Framer, per person who picks them ("the room knows you")
   vandalPerCatch: 1, // Snitch, per player who caught a Framer
   catchVandal: 3, // Framer bonus for guessing the Snitch
   accompliceVote: 2, // Accomplice, per vote on themselves

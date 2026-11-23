@@ -88,11 +88,11 @@ test('full round: roles -> answering -> voting -> review -> recap -> scoreboard'
   act(as('dana'), 'castVote', { answerIndex: 0, suspectId: 'maya' }, voting);
   assert.equal(state.phase, 'review', 'voting ends early once every vote and guess is in');
 
-  assert.equal(state.round.result.deltas.maya, 7);
+  assert.equal(state.round.result.deltas.maya, 5);
   assert.equal(state.players.maya.score, 0, 'scores are applied at reveal, not review');
   act(ADMIN, 'reveal');
   assert.equal(state.phase, 'recap');
-  assert.equal(state.players.maya.score, 7);
+  assert.equal(state.players.maya.score, 5);
   assert.equal(state.players.sam.score, -2);
   assert.equal(state.roundNumber, 1);
   act(ADMIN, 'showScoreboard');

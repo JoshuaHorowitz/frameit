@@ -50,15 +50,12 @@ export function scoreRound(round, points = DEFAULT_POINTS, playerIds = []) {
       if (b.suspectId === framer.id) continue;
       (onOthers[b.suspectId] ??= []).push(b.voterId);
     }
-    const otherCount = Object.values(onOthers).reduce((n, list) => n + list.length, 0);
 
     for (const voterId of catchers) add(voterId, p.catchFramer);
 
-    const perfect = cast.length > 0 && catchers.length === 0;
+    // The Framer answers honestly and scores when the room recognizes them.
     const isChallenged = challenged.has(answerIndex);
-    const framerPoints = isChallenged
-      ? 0
-      : otherCount * p.voteOnOther + (perfect ? p.perfectFrame : 0);
+    const framerPoints = isChallenged ? 0 : catchers.length * p.framerPerCatch;
     add(framer.id, framerPoints);
 
     return {
@@ -67,7 +64,6 @@ export function scoreRound(round, points = DEFAULT_POINTS, playerIds = []) {
       voteCount: cast.length,
       onOthers,
       catchers,
-      perfect,
       challenged: isChallenged,
       framerPoints,
     };

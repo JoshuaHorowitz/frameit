@@ -419,8 +419,7 @@ export function AdminSettings({ game, back }) {
       <h1 className="h2">Points</h1>
       <div className="card" style={{ gap: 4 }}>
         {num('Catching the Framer', P.catchFramer, (v) => set({ points: { catchFramer: v } }))}
-        {num('Framer: per wrong guess', P.voteOnOther, (v) => set({ points: { voteOnOther: v } }))}
-        {num('Perfect Frame bonus', P.perfectFrame, (v) => set({ points: { perfectFrame: v } }))}
+        {num('Framer: per person who picks them', P.framerPerCatch, (v) => set({ points: { framerPerCatch: v } }))}
         {num('Snitch: per catch', P.vandalPerCatch, (v) => set({ points: { vandalPerCatch: v } }))}
         {num('Framer catches Snitch', P.catchVandal, (v) => set({ points: { catchVandal: v } }))}
         {num('Accomplice: per vote on them', P.accompliceVote, (v) => set({ points: { accompliceVote: v } }))}
