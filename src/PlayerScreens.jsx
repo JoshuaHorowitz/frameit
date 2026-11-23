@@ -337,8 +337,11 @@ export function FramerVotingScreen({ game }) {
       <Screen>
         <TopBar game={game} left={<span className="chip gold">You&apos;re the Framer</span>} />
         <div className="stack center" style={{ marginTop: '20vh' }}>
-          <h1 className="h1">Everyone&apos;s voting on you.</h1>
-          <p className="body">Keep a straight face, because everyone&apos;s watching you right now.</p>
+          <h1 className="h1">Blend in.</h1>
+          <p className="body">
+            Everyone&apos;s trying to work out who wrote your answer. Join the discussion like you&apos;re guessing too, and nudge them toward{' '}
+            <b style={{ color: 'var(--blue)' }}>{nameOf(view, r.targetId)}</b>.
+          </p>
         </div>
         <div className="push-down"><VotesIn round={r} /></div>
       </Screen>
@@ -358,7 +361,9 @@ export function FramerVotingScreen({ game }) {
       <PlayerGrid players={others} selected={r.myVandalGuess} purple onPick={(id) => send('guessVandal', { suspectId: id })} />
       <div className="push-down stack">
         <div className="status-row spread"><span className="small">Voting in progress</span><b>{r.votesIn} of {r.votesExpected} in</b></div>
-        <p className="small center">Keep a straight face, because everyone&apos;s watching you right now.</p>
+        <p className="small center">
+          Blend in while you guess. Keep nudging them toward <b style={{ color: 'var(--blue)' }}>{nameOf(view, r.targetId)}</b>.
+        </p>
       </div>
     </Screen>
   );
