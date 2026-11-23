@@ -27,8 +27,34 @@ class ErrorBoundary extends Component {
 }
 
 // Errors outside React (e.g. while opening the socket) show up too.
-window.addEventListener('error', (e) => showFatal(e.error || e.message));
-window.addEventListener('unhandledrejection', (e) => showFatal(e.reason));
+// Only FrameIt's own errors are shown. Browser extensions and other
+// third-party scripts on the page raise errors too; browsers report those
+// as a bare "Script error." with no details, and they aren't ours to show.
+const fromOurCode = (filename) => {
+  if (!filename) return false;
+  try {
+    return new URL(filename, window.location.href).origin === window.location.origin;
+  } catch {
+    return false;
+  }
+};
+window.addEventListener('error', (e) => {
+  if (!e.error || e.message === 'Script error.' || !fromOurCode(e.filename)) {
+    console.warn('Ignored an error from outside FrameIt:', e.message);
+    return;
+  }
+  showFatal(e.error);
+});
+window.addEventListener('unhandledrejection', (e) => {
+  // Rejections carry no source file; only show real Error objects whose
+  // stack points at our own code.
+  const stack = e.reason?.stack || '';
+  if (!(e.reason instanceof Error) || !stack.includes(window.location.origin)) {
+    console.warn('Ignored a rejection from outside FrameIt:', e.reason);
+    return;
+  }
+  showFatal(e.reason);
+});
 function showFatal(err) {
   if (document.getElementById('fatal')) return;
   const el = document.createElement('pre');
