@@ -17,6 +17,7 @@ function revealedRound(round) {
     question: round.question,
     framers: round.framers.map(({ id, answer }) => ({ id, answer })),
     vandalId: round.vandalId,
+    vandalPushId: round.vandalPushId ?? null,
     accompliceId: round.accompliceId,
     votes: round.votes,
     vandalGuesses: round.vandalGuesses,
@@ -59,6 +60,11 @@ function playerRoundView(state, id, role) {
   if (role === 'vandal' || role === 'accomplice') {
     view.framers = round.framers.map(({ id: fid }) => ({ id: fid }));
   }
+  if (role === 'vandal') {
+    // The Saboteur needs the question to choose who to push.
+    view.question = round.question;
+    view.myPushId = round.vandalPushId ?? null;
+  }
   if (phase === P.ANSWERING) view.myMessages = myMessages(round, id);
   if (voting) {
     view.question = round.question;
@@ -90,6 +96,7 @@ function adminView(state) {
       messageCount: round.messages.length,
       ...votesProgress(round),
       vandalGuessIn: round.vandalId ? round.framers.every((f) => round.vandalGuesses[f.id]) : null,
+      saboteurChose: round.vandalId ? Boolean(round.vandalPushId) : null,
       knownRoles: {
         framers: known.framers ? round.framers.map((f) => f.id) : null,
         vandalId: known.vandal ? round.vandalId : null,

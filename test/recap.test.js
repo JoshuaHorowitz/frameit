@@ -19,6 +19,7 @@ test('mockup round recap matches the admin Recap screen', () => {
   const result = scoreRound({
     framers: [{ id: 'maya' }],
     vandalId: 'sam',
+    vandalPushId: 'noah',
     votes: {
       sarah: { 0: 'noah' }, grandpa: { 0: 'noah' }, ben: { 0: 'noah' },
       noah: { 0: 'lily' }, lily: { 0: 'maya' }, dana: { 0: 'maya' },
@@ -28,15 +29,15 @@ test('mockup round recap matches the admin Recap screen', () => {
   const { paragraphs, totals } = buildRecap(result, NAMES);
 
   assert.deepEqual(paragraphs, [
-    'Maya was the Framer this round. Sam was the Snitch, secretly trying to get everyone to figure out it was Maya.',
+    'Maya was the Framer this round. Sam was the Saboteur, secretly trying to get everyone to pick Noah.',
     'Lily and Dana knew it was Maya: +3 each, and Maya gets +1 for each of them. Aunt Sarah, Grandpa and Ben guessed Noah. Noah guessed Lily.',
-    "That earns Sam +1 for each player who picked Maya. But Maya figured out Sam was the Snitch! Maya gets +3, and Sam's +2 is reversed to \u22122.",
+    "3 votes went to Noah, which earns Sam +2 each. But Maya figured out Sam was the Saboteur! Maya gets +3, and Sam's +6 is reversed to \u22126.",
   ]);
   assert.deepEqual(totals, [
     { id: 'maya', name: 'Maya', delta: 5 },
     { id: 'dana', name: 'Dana', delta: 3 },
     { id: 'lily', name: 'Lily', delta: 3 },
-    { id: 'sam', name: 'Sam', delta: -2 },
+    { id: 'sam', name: 'Sam', delta: -6 },
   ]);
 });
 

@@ -4,10 +4,11 @@ import { scoreRound } from '../server/scoring.js';
 
 const PLAYERS = ['maya', 'noah', 'sam', 'sarah', 'grandpa', 'lily', 'ben', 'dana'];
 
-// The round drawn in the mockups: Maya answers, Sam is the Snitch.
+// The round drawn in the mockups: Maya answers; Sam is the Saboteur, pushing Noah.
 const mockupRound = () => ({
   framers: [{ id: 'maya' }],
   vandalId: 'sam',
+  vandalPushId: 'noah',
   accompliceId: null,
   votes: {
     sarah: { 0: 'noah' },
@@ -21,12 +22,12 @@ const mockupRound = () => ({
   challenged: [],
 });
 
-test('mockup round: Maya +5, Lily and Dana +3, Sam reversed to -2', () => {
+test('mockup round: Maya +5, Lily and Dana +3, Sam reversed to -6', () => {
   const { deltas } = scoreRound(mockupRound(), undefined, PLAYERS);
   assert.deepEqual(deltas, {
-    maya: 5, // 2 people picked her (+1 each) + spotted the Snitch (+3)
+    maya: 5, // 2 people picked her (+1 each) + spotted the Saboteur (+3)
     noah: 0,
-    sam: -2, // 2 picks, reversed
+    sam: -6, // 3 votes on Noah (+2 each), reversed
     sarah: 0,
     grandpa: 0,
     lily: 3,
@@ -43,18 +44,18 @@ test('wrong guesses score nothing for anyone', () => {
   assert.deepEqual(answers[0].catchers, []);
 });
 
-test('the Snitch keeps their points when the Framer guesses wrong', () => {
+test('the Saboteur keeps their points when the Framer guesses wrong', () => {
   const round = mockupRound();
   round.vandalGuesses = { maya: 'grandpa' };
   const { deltas, vandal } = scoreRound(round, undefined, PLAYERS);
-  assert.equal(deltas.sam, 2);
+  assert.equal(deltas.sam, 6);
   assert.equal(deltas.maya, 2);
   assert.equal(vandal.reversed, false);
 });
 
-test('a caught Snitch with no picks scores 0, not -0', () => {
+test('a spotted Saboteur whose person got no votes scores 0, not -0', () => {
   const round = mockupRound();
-  round.votes = { sarah: { 0: 'noah' }, lily: { 0: 'ben' } };
+  round.votes = { sarah: { 0: 'ben' }, lily: { 0: 'dana' } };
   const { deltas } = scoreRound(round, undefined, PLAYERS);
   assert.ok(Object.is(deltas.sam, 0));
   assert.equal(deltas.maya, 3);
@@ -69,10 +70,10 @@ test('a challenged answer gives the Framer 0, guessers keep their points', () =>
   const round = mockupRound();
   round.challenged = [0];
   const { deltas } = scoreRound(round, undefined, PLAYERS);
-  assert.equal(deltas.maya, 0); // no pick points and no Snitch bonus
+  assert.equal(deltas.maya, 0); // no pick points and no Saboteur bonus
   assert.equal(deltas.lily, 3);
   assert.equal(deltas.dana, 3);
-  assert.equal(deltas.sam, -2); // the Snitch was still spotted
+  assert.equal(deltas.sam, -6); // the Saboteur was still spotted
 });
 
 test('Accomplice: +2 per vote on themselves, -1 per vote on the Framer', () => {
@@ -114,10 +115,11 @@ test('Two Framers: picks per answer, Accomplice penalised for votes on either', 
   assert.equal(deltas.dana, 4 - 3);
 });
 
-test('Two Framers who both spot the Snitch each get +3; reversal happens once', () => {
+test('Two Framers who both spot the Saboteur each get +3; reversal happens once', () => {
   const round = {
     framers: [{ id: 'maya' }, { id: 'sam' }],
     vandalId: 'lily',
+    vandalPushId: 'ben',
     votes: {
       sarah: { 0: 'maya', 1: 'sam' },
       grandpa: { 0: 'noah', 1: 'ben' },
@@ -133,7 +135,17 @@ test('Two Framers who both spot the Snitch each get +3; reversal happens once', 
 });
 
 test('custom point values are respected', () => {
-  const { deltas } = scoreRound(mockupRound(), { catchFramer: 4, framerPerCatch: 2 }, PLAYERS);
+  const { deltas } = scoreRound(mockupRound(), { catchFramer: 4, framerPerCatch: 2, saboteurPerVote: 1 }, PLAYERS);
   assert.equal(deltas.lily, 4);
   assert.equal(deltas.maya, 2 * 2 + 3);
+  assert.equal(deltas.sam, -3);
+});
+
+test('a Saboteur who never chose anyone scores nothing', () => {
+  const round = mockupRound();
+  round.vandalPushId = null;
+  round.vandalGuesses = {};
+  const { deltas, vandal } = scoreRound(round, undefined, PLAYERS);
+  assert.ok(Object.is(deltas.sam, 0));
+  assert.equal(vandal.pushVotes, 0);
 });

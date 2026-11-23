@@ -186,7 +186,8 @@ function prepareRound(state, random) {
     },
     question: drawQuestion(state, random),
     framers: [],
-    vandalId: null,
+    vandalId: null, // the Saboteur
+    vandalPushId: null, // who the Saboteur is pushing everyone toward
     accompliceId: null,
     voterIds: [],
     assignedByAdmin: { framers: false, vandal: false, accomplice: false },
@@ -362,10 +363,21 @@ const playerActions = {
     maybeEndVotingEarly(state);
   },
 
+  // The Saboteur chooses who to push everyone toward. They can change their
+  // mind until voting starts.
+  choosePush(state, actor, { suspectId }) {
+    requirePhase(state, P.ROLES, P.ANSWERING);
+    const round = state.round;
+    if (round.vandalId !== actor.playerId) fail('not_saboteur', 'Only the Saboteur can do that.');
+    if (!state.players[suspectId] || suspectId === actor.playerId) fail('bad_suspect', 'Pick someone else.');
+    if (framerIndexOf(round, suspectId) >= 0) fail('bad_suspect', 'Pick someone who is not the Framer.');
+    round.vandalPushId = suspectId;
+  },
+
   guessVandal(state, actor, { suspectId }) {
     requirePhase(state, P.VOTING);
     const framer = requireFramer(state, actor);
-    if (!state.round.vandalId) fail('no_vandal', 'There is no Snitch this round.');
+    if (!state.round.vandalId) fail('no_vandal', 'There is no Saboteur this round.');
     if (!state.players[suspectId] || suspectId === actor.playerId) fail('bad_suspect', 'Pick someone else.');
     state.round.vandalGuesses[framer.id] = suspectId;
     maybeEndVotingEarly(state);

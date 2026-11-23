@@ -73,9 +73,13 @@ test('full round: roles -> answering -> voting -> review -> recap -> scoreboard'
   act(as('lily'), 'sendMessage', { text: 'stop smiling' });
   assert.throws(() => act(as('maya'), 'sendMessage', { text: 'hi' }), { code: 'not_allowed' });
   act(as('maya'), 'submitAnswer', { text: 'Spiders. Big ones.' });
+  assert.throws(() => act(as('sam'), 'choosePush', { suspectId: 'maya' }), { code: 'bad_suspect' });
+  assert.throws(() => act(as('lily'), 'choosePush', { suspectId: 'noah' }), { code: 'not_saboteur' });
+  act(as('sam'), 'choosePush', { suspectId: 'noah' });
 
   tick(state, now + 30_000, ctx.random);
   assert.equal(state.phase, 'voting');
+  assert.throws(() => act(as('sam'), 'choosePush', { suspectId: 'ben' }), { code: 'wrong_phase' });
 
   const voting = now + 31_000;
   const votes = { auntsarah: 'noah', grandpa: 'noah', ben: 'noah', noah: 'lily', lily: 'maya' };
@@ -93,7 +97,7 @@ test('full round: roles -> answering -> voting -> review -> recap -> scoreboard'
   act(ADMIN, 'reveal');
   assert.equal(state.phase, 'recap');
   assert.equal(state.players.maya.score, 5);
-  assert.equal(state.players.sam.score, -2);
+  assert.equal(state.players.sam.score, -6); // 3 votes on Noah (+6), spotted, reversed
   assert.equal(state.roundNumber, 1);
   act(ADMIN, 'showScoreboard');
   act(ADMIN, 'nextRound');

@@ -3,7 +3,8 @@
 //
 // round = {
 //   framers: [{ id }],                             // one, or two in a Two-Framer round
-//   vandalId: string | null,
+//   vandalId: string | null,                       // the Saboteur ("vandal" in code)
+//   vandalPushId: string | null,                   // who the Saboteur is pushing everyone toward
 //   accompliceId: string | null,
 //   votes: { [voterId]: { [answerIndex]: suspectId } },
 //   vandalGuesses: { [framerId]: suspectId },
@@ -13,7 +14,7 @@
 // Returns { deltas, answers, vandal, accomplice }:
 //   deltas      per-player point change for the round ({ [playerId]: number })
 //   answers     one event object per answer, for the recap
-//   vandal      Snitch event object, or null
+//   vandal      Saboteur event object, or null
 //   accomplice  Accomplice event object, or null
 
 import { DEFAULT_POINTS } from '../shared/protocol.js';
@@ -71,16 +72,18 @@ export function scoreRound(round, points = DEFAULT_POINTS, playerIds = []) {
 
   let vandal = null;
   if (round.vandalId) {
-    const catches = answers.reduce((n, a) => n + a.catchers.length, 0);
-    const earned = catches * p.vandalPerCatch;
+    // The Saboteur scores for every vote (on any answer) on the person they're pushing.
+    const pushId = round.vandalPushId ?? null;
+    const pushVotes = pushId ? ballots.filter((b) => b.suspectId === pushId).length : 0;
+    const earned = pushVotes * p.saboteurPerVote;
     const caughtBy = framers.filter((f) => guesses[f.id] === round.vandalId).map((f) => f.id);
     const reversed = caughtBy.length > 0;
-    // Reversal happens once, however many Framers caught the Snitch.
+    // Reversal happens once, however many Framers spotted the Saboteur.
     // (Avoid -0, which is a different value from 0 to strict equality.)
     const vandalPoints = reversed && earned !== 0 ? -earned : earned;
     add(round.vandalId, vandalPoints);
 
-    // Each Framer who caught the Snitch gets the bonus, unless their answer was challenged.
+    // Each Framer who spotted the Saboteur gets the bonus, unless their answer was challenged.
     const bonusTo = [];
     framers.forEach((f, i) => {
       if (caughtBy.includes(f.id) && !challenged.has(i)) {
@@ -89,7 +92,7 @@ export function scoreRound(round, points = DEFAULT_POINTS, playerIds = []) {
       }
     });
 
-    vandal = { id: round.vandalId, catches, earned, reversed, caughtBy, bonusTo, points: vandalPoints };
+    vandal = { id: round.vandalId, pushId, pushVotes, earned, reversed, caughtBy, bonusTo, points: vandalPoints };
   }
 
   let accomplice = null;
