@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import { useCountdown } from './useGame.js';
 
 const AVATAR_COLORS = ['#6ea8fe', '#5fd39a', '#ff9f7a', '#f5c451', '#e2b8ff', '#4fd1c5', '#ffb3c7', '#b8d86b'];
@@ -43,12 +44,34 @@ export function TopBar({ left, game, showBar = true }) {
           <span className="chip">Round {view?.roundNumber || 1}</span>
         )}
       </div>
-      {t && showBar && total > 0 && (
-        <div className="bar" aria-hidden="true">
-          <div style={{ width: `${Math.min(100, (t.ms / (total * 1000)) * 100)}%` }} />
-        </div>
-      )}
+      {t && showBar && total > 0 && <TimerBar view={view} clockOffset={clockOffset} />}
     </>
+  );
+}
+
+// The draining bar is one CSS transition from "now" to empty, run by the
+// browser's compositor. That stays smooth on slow phones and in low-power
+// modes, where redrawing from JavaScript every frame stutters. It restarts
+// only when the deadline changes (new phase, +15 s, pause/resume).
+function TimerBar({ view, clockOffset }) {
+  const fill = useRef(null);
+  const totalMs = (view.timerTotal || 0) * 1000;
+  useLayoutEffect(() => {
+    const el = fill.current;
+    if (!el || !totalMs) return;
+    const paused = view.pausedRemaining != null;
+    const remaining = paused ? view.pausedRemaining : Math.max(0, view.deadline - (Date.now() + clockOffset));
+    el.style.transition = 'none';
+    el.style.transform = `scaleX(${Math.min(1, remaining / totalMs)})`;
+    if (paused || remaining <= 0) return;
+    el.getBoundingClientRect(); // commit the starting width before animating
+    el.style.transition = `transform ${remaining}ms linear`;
+    el.style.transform = 'scaleX(0)';
+  }, [view.deadline, view.pausedRemaining, totalMs, clockOffset]);
+  return (
+    <div className="bar" aria-hidden="true">
+      <div ref={fill} />
+    </div>
   );
 }
 
