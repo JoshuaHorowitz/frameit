@@ -4,7 +4,7 @@ import { scoreRound } from '../server/scoring.js';
 
 const PLAYERS = ['maya', 'noah', 'sam', 'sarah', 'grandpa', 'lily', 'ben', 'dana'];
 
-// The round drawn in the mockups: Maya is the Framer, Sam is the Vandal.
+// The round drawn in the mockups: Maya is the Framer, Sam is the Snitch.
 const mockupRound = () => ({
   framers: [{ id: 'maya' }],
   vandalId: 'sam',
@@ -24,7 +24,7 @@ const mockupRound = () => ({
 test('mockup round: Maya +7, Lily and Dana +3, Sam reversed to -2', () => {
   const { deltas } = scoreRound(mockupRound(), undefined, PLAYERS);
   assert.deepEqual(deltas, {
-    maya: 7, // 4 wrong votes + caught the Vandal 3
+    maya: 7, // 4 wrong votes + caught the Snitch 3
     noah: 0,
     sam: -2, // 2 catches, reversed
     sarah: 0,
@@ -35,7 +35,7 @@ test('mockup round: Maya +7, Lily and Dana +3, Sam reversed to -2', () => {
   });
 });
 
-test('Vandal keeps their points when the Framer guesses wrong', () => {
+test('Snitch keeps their points when the Framer guesses wrong', () => {
   const round = mockupRound();
   round.vandalGuesses = { maya: 'grandpa' };
   const { deltas, vandal } = scoreRound(round, undefined, PLAYERS);
@@ -44,7 +44,7 @@ test('Vandal keeps their points when the Framer guesses wrong', () => {
   assert.equal(vandal.reversed, false);
 });
 
-test('a caught Vandal with no catches scores 0, not -0', () => {
+test('a caught Snitch with no catches scores 0, not -0', () => {
   const round = mockupRound();
   round.votes = { sarah: { 0: 'noah' }, lily: { 0: 'ben' } };
   const { deltas } = scoreRound(round, undefined, PLAYERS);
@@ -72,10 +72,10 @@ test('a challenged answer gives the Framer 0, guessers keep their points', () =>
   const round = mockupRound();
   round.challenged = [0];
   const { deltas } = scoreRound(round, undefined, PLAYERS);
-  assert.equal(deltas.maya, 0); // no frame points and no Vandal bonus
+  assert.equal(deltas.maya, 0); // no frame points and no Snitch bonus
   assert.equal(deltas.lily, 3);
   assert.equal(deltas.dana, 3);
-  assert.equal(deltas.sam, -2); // the Vandal was still caught
+  assert.equal(deltas.sam, -2); // the Snitch was still caught
 });
 
 test('Accomplice: +2 per vote on themselves, -1 per vote on the Framer', () => {
@@ -119,7 +119,7 @@ test('Two Framers: votes per answer, catches per answer, Accomplice penalised fo
   assert.equal(deltas.dana, 4 - 3);
 });
 
-test('Two Framers who both catch the Vandal each get +3; reversal happens once', () => {
+test('Two Framers who both catch the Snitch each get +3; reversal happens once', () => {
   const round = {
     framers: [
       { id: 'maya', targetId: 'noah' },

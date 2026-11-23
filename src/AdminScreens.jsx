@@ -13,7 +13,7 @@ function Header({ game, title, right }) {
 }
 
 const ADD_ONS = [
-  ['vandal', 'Vandal'],
+  ['vandal', 'Snitch'],
   ['accomplice', 'Accomplice'],
   ['twoFramers', 'Two Framers'],
 ];
@@ -113,7 +113,7 @@ export function AdminSetup({ game, openSettings }) {
         <h2 className="label">Roles · tap to assign</h2>
         {roleSelect(addOns.twoFramers ? 'Framer 1' : 'Framer', roles.framers[0], (id) => setRole({ framers: [id, roles.framers[1]] }))}
         {addOns.twoFramers && roleSelect('Framer 2', roles.framers[1], (id) => setRole({ framers: [roles.framers[0], id] }))}
-        {addOns.vandal && roleSelect('Vandal', roles.vandal, (id) => setRole({ vandal: id }))}
+        {addOns.vandal && roleSelect('Snitch', roles.vandal, (id) => setRole({ vandal: id }))}
         {addOns.accomplice && roleSelect('Accomplice', roles.accomplice, (id) => setRole({ accomplice: id }))}
         <p className="small">Random roles stay hidden from you so you can play along.</p>
       </div>
@@ -167,7 +167,7 @@ export function AdminLive({ game, openFramerScreen }) {
       {(known.framers || known.vandalId || known.accompliceId) && (
         <p className="small">
           You assigned: {known.framers ? `Framer ${known.framers.map(n).join(' & ')}` : ''}
-          {known.vandalId ? ` · Vandal ${n(known.vandalId)}` : ''}
+          {known.vandalId ? ` · Snitch ${n(known.vandalId)}` : ''}
           {known.accompliceId ? ` · Accomplice ${n(known.accompliceId)}` : ''}
         </p>
       )}
@@ -178,7 +178,7 @@ export function AdminLive({ game, openFramerScreen }) {
         <div className="status-row">{live.answersSubmitted === live.framerCount ? '✅' : '⏳'} Answers submitted: {live.answersSubmitted} of {live.framerCount}</div>
         {view.phase === 'voting' && <div className="status-row">🗳️ Votes in: {live.votesIn} of {live.votesExpected}</div>}
         {view.phase === 'voting' && live.vandalGuessIn !== null && (
-          <div className="status-row">{live.vandalGuessIn ? '✅' : '⏳'} Vandal guess {live.vandalGuessIn ? 'in' : 'pending'}</div>
+          <div className="status-row">{live.vandalGuessIn ? '✅' : '⏳'} Snitch guess {live.vandalGuessIn ? 'in' : 'pending'}</div>
         )}
         {live.framerScreen && (
           <button className="status-row" style={{ border: '2px solid var(--border-strong)', textAlign: 'left' }} onClick={openFramerScreen}>
@@ -271,7 +271,7 @@ export function AdminReview({ game }) {
       })}
       {rv.vandal && (
         <p className="body">
-          Vandal <b style={{ color: 'var(--purple)' }}>{n(rv.vandal.id)}</b>{rv.vandal.reversed ? ' (caught)' : ''}
+          Snitch <b style={{ color: 'var(--purple)' }}>{n(rv.vandal.id)}</b>{rv.vandal.reversed ? ' (caught)' : ''}
         </p>
       )}
       {rv.accomplice && <p className="body">Accomplice <b style={{ color: 'var(--orange)' }}>{n(rv.accomplice.id)}</b></p>}
@@ -421,14 +421,14 @@ export function AdminSettings({ game, back }) {
         {num('Catching the Framer', P.catchFramer, (v) => set({ points: { catchFramer: v } }))}
         {num('Framer: per wrong guess', P.voteOnOther, (v) => set({ points: { voteOnOther: v } }))}
         {num('Perfect Frame bonus', P.perfectFrame, (v) => set({ points: { perfectFrame: v } }))}
-        {num('Vandal: per catch', P.vandalPerCatch, (v) => set({ points: { vandalPerCatch: v } }))}
-        {num('Framer catches Vandal', P.catchVandal, (v) => set({ points: { catchVandal: v } }))}
+        {num('Snitch: per catch', P.vandalPerCatch, (v) => set({ points: { vandalPerCatch: v } }))}
+        {num('Framer catches Snitch', P.catchVandal, (v) => set({ points: { catchVandal: v } }))}
         {num('Accomplice: per vote on them', P.accompliceVote, (v) => set({ points: { accompliceVote: v } }))}
         {num('Accomplice: penalty per Framer vote', P.accomplicePenalty, (v) => set({ points: { accomplicePenalty: v } }))}
       </div>
       <h1 className="h2">Randomize chances (0–1)</h1>
       <div className="card" style={{ gap: 4 }}>
-        {num('Vandal', settings.randomChances.vandal, (v) => set({ randomChances: { vandal: Math.min(1, v) } }), 0.05)}
+        {num('Snitch', settings.randomChances.vandal, (v) => set({ randomChances: { vandal: Math.min(1, v) } }), 0.05)}
         {num('Accomplice', settings.randomChances.accomplice, (v) => set({ randomChances: { accomplice: Math.min(1, v) } }), 0.05)}
         {num('Two Framers', settings.randomChances.twoFramers, (v) => set({ randomChances: { twoFramers: Math.min(1, v) } }), 0.05)}
       </div>

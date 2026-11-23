@@ -25,7 +25,7 @@ function setupGame({ now = 1_000_000, random = seeded() } = {}) {
   return { state, act, random, now };
 }
 
-// Maya is the Framer with Sam as Vandal: the mockup round.
+// Maya is the Framer with Sam as Snitch: the mockup round.
 function startMockupRound(ctx) {
   const { act } = ctx;
   act(ADMIN, 'configureRound', {

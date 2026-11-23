@@ -138,7 +138,7 @@ export function RoleBriefScreen({ game, role }) {
           <br />
           ONLY YOU SEE THIS
         </h1>
-        <h2 className="h1" style={{ fontSize: 30 }}>You&apos;re the {vandal ? 'Vandal' : 'Accomplice'}.</h2>
+        <h2 className="h1" style={{ fontSize: 30 }}>You&apos;re the {vandal ? 'Snitch' : 'Accomplice'}.</h2>
         {vandal ? (
           <p className="body">
             You will get <b style={{ color: 'var(--text)' }}>+1 for every player that catches the Framer</b>. Drop hints and lead others to get the most points for yourself this round!
@@ -242,7 +242,7 @@ export function TeaseScreen({ game }) {
       <TopBar game={game} />
       {framer && (
         <div className="chip purple" style={{ alignSelf: 'flex-start' }}>
-          You&apos;re the {role === 'vandal' ? 'Vandal' : 'Accomplice'}:{' '}
+          You&apos;re the {role === 'vandal' ? 'Snitch' : 'Accomplice'}:{' '}
           {r.framers.map((f) => nameOf(view, f.id)).join(' & ')} {r.framers.length > 1 ? 'are the Framers' : 'is the Framer'}
         </div>
       )}
@@ -343,7 +343,7 @@ export function FramerVotingScreen({ game }) {
       <TopBar game={game} left={<span className="chip gold">You&apos;re the Framer</span>} />
       <div className="stack" style={{ marginTop: 6 }}>
         <h1 className="shout">SURPRISE!!</h1>
-        <h2 className="h2">There was a “Vandal” this round</h2>
+        <h2 className="h2">There was a “Snitch” this round</h2>
         <p className="body">
           That means someone in the room has been trying to oust you as the Framer this entire time! Guess who they are for{' '}
           <b style={{ color: 'var(--gold)' }}>+3</b>!
@@ -408,7 +408,7 @@ export function RevealScreen({ game }) {
     sub = `Your answer: “${r.framers[i].answer}”`;
   } else if (role === 'vandal') {
     const caught = r.framers.some((f) => r.vandalGuesses[f.id] === me);
-    kicker = 'YOU WERE THE VANDAL';
+    kicker = 'YOU WERE THE SNITCH';
     headline = caught ? 'Busted!' : 'You got away with it.';
   } else if (role === 'accomplice') {
     kicker = 'YOU WERE THE ACCOMPLICE';
@@ -440,7 +440,7 @@ export function RevealScreen({ game }) {
       ))}
       {r.vandalId && (
         <div className="stack center" style={{ gap: 4 }}>
-          <span className="h2" style={{ fontSize: 26 }}>The Vandal was <span style={{ color: 'var(--purple)' }}>{n(r.vandalId)}</span></span>
+          <span className="h2" style={{ fontSize: 26 }}>The Snitch was <span style={{ color: 'var(--purple)' }}>{n(r.vandalId)}</span></span>
           {r.framers.some((f) => r.vandalGuesses[f.id] === r.vandalId) && (
             <span style={{ fontSize: 18, fontWeight: 600, color: 'var(--purple)' }}>
               …and {r.framers.filter((f) => r.vandalGuesses[f.id] === r.vandalId).map((f) => n(f.id)).join(' and ')} caught them!

@@ -24,12 +24,15 @@ export const PHASES = Object.freeze({
   FINAL: 'final',
 });
 
+// Naming note: the role players see as "the Snitch" is called `vandal` in the
+// code and the saved game state (its original name), e.g. vandalId,
+// catchVandal, guessVandal. Only the words on screen changed.
 export const DEFAULT_POINTS = Object.freeze({
   catchFramer: 3, // each voter who picks the Framer
   voteOnOther: 1, // Framer, per vote on anyone but them
   perfectFrame: 5, // Framer bonus when nobody caught them
-  vandalPerCatch: 1, // Vandal, per player who caught a Framer
-  catchVandal: 3, // Framer bonus for guessing the Vandal
+  vandalPerCatch: 1, // Snitch, per player who caught a Framer
+  catchVandal: 3, // Framer bonus for guessing the Snitch
   accompliceVote: 2, // Accomplice, per vote on themselves
   accomplicePenalty: 1, // Accomplice loses this per vote on any Framer
 });

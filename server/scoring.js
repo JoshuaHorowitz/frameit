@@ -13,7 +13,7 @@
 // Returns { deltas, answers, vandal, accomplice }:
 //   deltas      per-player point change for the round ({ [playerId]: number })
 //   answers     one event object per answer, for the recap
-//   vandal      Vandal event object, or null
+//   vandal      Snitch event object, or null
 //   accomplice  Accomplice event object, or null
 
 import { DEFAULT_POINTS } from '../shared/protocol.js';
@@ -79,12 +79,12 @@ export function scoreRound(round, points = DEFAULT_POINTS, playerIds = []) {
     const earned = catches * p.vandalPerCatch;
     const caughtBy = framers.filter((f) => guesses[f.id] === round.vandalId).map((f) => f.id);
     const reversed = caughtBy.length > 0;
-    // Reversal happens once, however many Framers caught the Vandal.
+    // Reversal happens once, however many Framers caught the Snitch.
     // (Avoid -0, which is a different value from 0 to strict equality.)
     const vandalPoints = reversed && earned !== 0 ? -earned : earned;
     add(round.vandalId, vandalPoints);
 
-    // Each Framer who caught the Vandal gets the bonus, unless their answer was challenged.
+    // Each Framer who caught the Snitch gets the bonus, unless their answer was challenged.
     const bonusTo = [];
     framers.forEach((f, i) => {
       if (caughtBy.includes(f.id) && !challenged.has(i)) {

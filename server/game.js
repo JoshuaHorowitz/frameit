@@ -365,7 +365,7 @@ const playerActions = {
   guessVandal(state, actor, { suspectId }) {
     requirePhase(state, P.VOTING);
     const framer = requireFramer(state, actor);
-    if (!state.round.vandalId) fail('no_vandal', 'There is no Vandal this round.');
+    if (!state.round.vandalId) fail('no_vandal', 'There is no Snitch this round.');
     if (!state.players[suspectId] || suspectId === actor.playerId) fail('bad_suspect', 'Pick someone else.');
     state.round.vandalGuesses[framer.id] = suspectId;
     maybeEndVotingEarly(state);

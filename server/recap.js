@@ -31,7 +31,7 @@ export function buildRecap(result, names = {}, points = DEFAULT_POINTS) {
   );
   if (vandal) {
     intro.push(
-      `${name(vandal.id)} was the Vandal, secretly trying to get everyone to figure out it was ${framerNames}.`
+      `${name(vandal.id)} was the Snitch, secretly trying to get everyone to figure out it was ${framerNames}.`
     );
   }
   if (accomplice) {
@@ -74,7 +74,7 @@ export function buildRecap(result, names = {}, points = DEFAULT_POINTS) {
         `That earns ${vandalName} +${p.vandalPerCatch} for each player who caught ${two ? 'a Framer' : framerNames}.`
       );
     } else {
-      lines.push(`Nobody caught ${two ? 'a Framer' : framerNames}, so ${vandalName} earns nothing as the Vandal.`);
+      lines.push(`Nobody caught ${two ? 'a Framer' : framerNames}, so ${vandalName} earns nothing as the Snitch.`);
     }
     if (vandal.reversed) {
       const catchers = joinNames(vandal.caughtBy.map(name));
@@ -87,7 +87,7 @@ export function buildRecap(result, names = {}, points = DEFAULT_POINTS) {
           ? `${vandalName}'s +${vandal.earned} is reversed to ${signed(vandal.points)}`
           : `${vandalName} had nothing to lose`;
       lines.push(
-        `But ${catchers} figured out ${vandalName} was the Vandal! ${bonus ? `${bonus}, and ${reversal}.` : `${reversal}.`}`
+        `But ${catchers} figured out ${vandalName} was the Snitch! ${bonus ? `${bonus}, and ${reversal}.` : `${reversal}.`}`
       );
     }
     paragraphs.push(lines.join(' '));
