@@ -1,0 +1,13 @@
+{
+  "name": "frameit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "FrameIt: a phone-based party game. Answer truthfully, frame someone else, don't crack.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
