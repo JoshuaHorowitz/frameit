@@ -278,6 +278,34 @@ test('resetGame clears players, scores and rounds but keeps settings and custom 
   assert.equal(state.players.maya.score, 0);
 });
 
+test('questions: delete built-in and added ones, restore built-ins, never run dry silently', async () => {
+  const { questionBank } = await import('../server/game.js');
+  const { QUESTIONS } = await import('../shared/questions.js');
+  const { state, act } = setupGame();
+  const total = QUESTIONS.length;
+  act(ADMIN, 'addQuestion', { text: 'Who would win in a pillow fight?' });
+  assert.equal(questionBank(state).length, total + 1);
+
+  const current = state.round.question;
+  act(ADMIN, 'removeQuestion', { text: current });
+  assert.notEqual(state.round.question, current, 'the lined-up question is replaced');
+  act(ADMIN, 'removeQuestion', { text: 'Who would win in a pillow fight?' });
+  assert.equal(questionBank(state).length, total - 1);
+  assert.equal(state.customQuestions.length, 0);
+  assert.throws(() => act(ADMIN, 'removeQuestion', { text: 'Not a real question' }), { code: 'bad_question' });
+
+  for (const q of QUESTIONS) if (!state.removedQuestions.includes(q)) act(ADMIN, 'removeQuestion', { text: q });
+  assert.equal(questionBank(state).length, 0);
+  assert.equal(state.round.question, null);
+  assert.throws(() => act(ADMIN, 'startRound'), { code: 'no_questions' });
+
+  act(ADMIN, 'restoreQuestions');
+  assert.equal(questionBank(state).length, total);
+  assert.ok(state.round.question);
+  act(ADMIN, 'resetGame');
+  assert.deepEqual(state.removedQuestions, [], 'restored bank survives a reset');
+});
+
 test('updateSettings only accepts known numeric settings', () => {
   const { state, act } = setupGame();
   act(ADMIN, 'updateSettings', { settings: { points: { catchFramer: 4, bogus: 9 }, timers: { voting: 'x' } } });

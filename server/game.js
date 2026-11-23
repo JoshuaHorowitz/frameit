@@ -36,6 +36,7 @@ const fail = (code, message) => {
 // get their defaults).
 export function migrateState(state) {
   state.settings = mergeSettings(DEFAULT_SETTINGS, state.settings);
+  state.removedQuestions ??= [];
   return state;
 }
 
@@ -47,6 +48,7 @@ export function createState(settings = {}) {
     adminConnected: false,
     settings: mergeSettings(DEFAULT_SETTINGS, settings),
     customQuestions: [],
+    removedQuestions: [], // built-in questions the admin deleted
     usedQuestions: [],
     round: null,
     notice: null, // { code, message, at } shown once to everyone, e.g. a cancelled round
@@ -164,8 +166,18 @@ function setDeadline(state, now, seconds) {
 
 // ---------- round lifecycle ----------
 
+// Every question currently in play: built-ins the admin hasn't deleted, then custom ones.
+export function questionBank(state) {
+  const removed = new Set(state.removedQuestions ?? []);
+  return [
+    ...QUESTIONS.filter((q) => !removed.has(q)).map((text) => ({ text, custom: false })),
+    ...state.customQuestions.map((text) => ({ text, custom: true })),
+  ];
+}
+
 function drawQuestion(state, random) {
-  const all = [...QUESTIONS, ...state.customQuestions];
+  const all = questionBank(state).map((q) => q.text);
+  if (all.length === 0) return null; // the admin deleted every question
   let pool = all.filter((q) => !state.usedQuestions.includes(q));
   if (pool.length === 0) {
     state.usedQuestions = [];
@@ -209,6 +221,7 @@ function cancelRound(state, random, now, message) {
 }
 
 function startRound(state, now, random) {
+  if (!state.round.question) fail('no_questions', 'There are no questions left. Add one in Settings.');
   const round = state.round;
   const { addOns, roles } = round.config;
   const active = activeIds(state);
@@ -526,10 +539,31 @@ const adminActions = {
     return { kicked: playerId };
   },
 
-  addQuestion(state, actor, { text }) {
+  addQuestion(state, actor, { text }, now, random) {
     const question = cleanText(text, MAX_QUESTION);
     if (question.length < 3) fail('bad_question', 'That question is too short.');
     if (!state.customQuestions.includes(question)) state.customQuestions.push(question);
+    state.removedQuestions = state.removedQuestions.filter((q) => q !== question);
+    if (state.phase === P.SETUP && !state.round.question) state.round.question = drawQuestion(state, random);
+  },
+
+  // Delete one question: a custom one is gone for good; a built-in one can be
+  // brought back with restoreQuestions.
+  removeQuestion(state, actor, { text }, now, random) {
+    if (state.customQuestions.includes(text)) {
+      state.customQuestions = state.customQuestions.filter((q) => q !== text);
+    } else if (QUESTIONS.includes(text)) {
+      if (!state.removedQuestions.includes(text)) state.removedQuestions.push(text);
+    } else {
+      fail('bad_question', 'That question is not in the bank.');
+    }
+    // If it was the question lined up for the next round, line up another.
+    if (state.phase === P.SETUP && state.round.question === text) state.round.question = drawQuestion(state, random);
+  },
+
+  restoreQuestions(state, actor, _payload, now, random) {
+    state.removedQuestions = [];
+    if (state.phase === P.SETUP && !state.round.question) state.round.question = drawQuestion(state, random);
   },
 
   updateSettings(state, actor, { settings }) {
@@ -537,12 +571,12 @@ const adminActions = {
   },
 
   // Wipe players, scores and rounds and go back to an empty lobby.
-  // Settings and the admin's custom questions are kept.
+  // Settings and the admin's question bank (added and deleted questions) are kept.
   resetGame(state) {
-    const { settings, customQuestions } = state;
+    const { settings, customQuestions, removedQuestions } = state;
     const fresh = createState(settings);
     for (const key of Object.keys(state)) delete state[key];
-    Object.assign(state, fresh, { customQuestions, adminConnected: true });
+    Object.assign(state, fresh, { customQuestions, removedQuestions, adminConnected: true });
     return { reset: true };
   },
 };

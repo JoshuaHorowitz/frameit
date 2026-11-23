@@ -3,7 +3,7 @@
 // See "What each phone sees" in the technical design doc.
 
 import { PHASES as P } from '../shared/protocol.js';
-import { ROUND_PHASES, REVEALED_PHASES, roleOf, framerIndexOf, votesProgress } from './game.js';
+import { ROUND_PHASES, REVEALED_PHASES, roleOf, framerIndexOf, votesProgress, questionBank } from './game.js';
 
 const TIMER_FOR_PHASE = { [P.ROLES]: 'roles', [P.ANSWERING]: 'answering', [P.VOTING]: 'voting' };
 
@@ -78,7 +78,8 @@ function adminView(state) {
   const { round, phase } = state;
   const view = {
     settings: state.settings,
-    customQuestions: state.customQuestions,
+    questions: questionBank(state),
+    removedBuiltIns: (state.removedQuestions ?? []).length,
   };
   if (!round) return view;
 
