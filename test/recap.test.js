@@ -28,9 +28,9 @@ test('mockup round recap matches the admin Recap screen', () => {
   const { paragraphs, totals } = buildRecap(result, NAMES);
 
   assert.deepEqual(paragraphs, [
-    'Maya was the Framer this round. Sam was the Vandal, secretly trying to get everyone to figure out it was Maya.',
+    'Maya was the Framer this round. Sam was the Snitch, secretly trying to get everyone to figure out it was Maya.',
     'Aunt Sarah, Grandpa and Ben fell for it and voted for Noah, which gives Maya +1 each. Noah fell for it and voted for Lily, which gives Maya +1. Lily and Dana caught Maya: +3 each.',
-    "That earns Sam +1 for each player who caught Maya. But Maya figured out Sam was the Vandal! Maya gets +3, and Sam's +2 is reversed to −2.",
+    "That earns Sam +1 for each player who caught Maya. But Maya figured out Sam was the Snitch! Maya gets +3, and Sam's +2 is reversed to −2.",
   ]);
   assert.deepEqual(totals, [
     { id: 'maya', name: 'Maya', delta: 7 },
