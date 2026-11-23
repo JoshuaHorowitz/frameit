@@ -26,14 +26,15 @@ export const PHASES = Object.freeze({
 
 // Naming note: the role players see as "the Saboteur" is called `vandal` in the
 // code and the saved game state (its original name), e.g. vandalId,
-// vandalPushId, catchVandal, guessVandal. Only the words on screen changed.
+// vandalPushId, catchVandal, guessVandal. Likewise "the Doppelganger" is
+// `accomplice` in code (accompliceId, accompliceVote). Only the words on screen changed.
 export const DEFAULT_POINTS = Object.freeze({
   catchFramer: 3, // each voter who picks the Framer
   framerPerCatch: 1, // Framer, per person who picks them ("the room knows you")
   saboteurPerVote: 2, // Saboteur, per vote on the person they're pushing
   catchVandal: 3, // Framer bonus for spotting the Saboteur
-  accompliceVote: 2, // Accomplice, per vote on themselves
-  accomplicePenalty: 1, // Accomplice loses this per vote on any Framer
+  accompliceVote: 2, // Doppelganger, per vote on themselves
+  accomplicePenalty: 1, // Doppelganger loses this per vote on any Framer
 });
 
 export const DEFAULT_SETTINGS = Object.freeze({

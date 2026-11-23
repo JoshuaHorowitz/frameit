@@ -37,7 +37,7 @@ export function buildRecap(result, names = {}, points = DEFAULT_POINTS) {
     );
   }
   if (accomplice) {
-    intro.push(`${name(accomplice.id)} was the Accomplice, trying to get everyone to pick them instead of ${framerNames}.`);
+    intro.push(`${name(accomplice.id)} was the Doppelganger, trying to get everyone to pick them instead of ${framerNames}.`);
   }
   paragraphs.push(intro.join(' '));
 

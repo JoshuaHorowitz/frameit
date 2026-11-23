@@ -55,7 +55,7 @@ test('nobody recognized, and challenge sentences', () => {
   assert.equal(challenged.paragraphs[1], 'Ben knew it was Maya: +3. The answer was challenged, so Maya gets no points for it.');
 });
 
-test('Two-Framer recap has a paragraph per answer and an Accomplice line', () => {
+test('Two-Framer recap has a paragraph per answer and a Doppelganger line', () => {
   const result = scoreRound({
     framers: [{ id: 'maya' }, { id: 'sam' }],
     accompliceId: 'dana',
@@ -63,7 +63,7 @@ test('Two-Framer recap has a paragraph per answer and an Accomplice line', () =>
   });
   const { paragraphs } = buildRecap(result, NAMES);
   assert.match(paragraphs[0], /^Maya was a Framer this round\. Sam was a Framer this round\./);
-  assert.match(paragraphs[0], /Dana was the Accomplice, trying to get everyone to pick them instead of Maya and Sam\./);
+  assert.match(paragraphs[0], /Dana was the Doppelganger, trying to get everyone to pick them instead of Maya and Sam\./);
   assert.match(paragraphs[1], /^On Maya's answer:/);
   assert.match(paragraphs[2], /^On Sam's answer:/);
   assert.equal(

@@ -159,7 +159,7 @@ export function SaboteurScreen({ game }) {
   );
 }
 
-// The Accomplice's briefing (the Saboteur has its own screen above).
+// The Doppelganger's briefing (the Saboteur has its own screen above).
 export function RoleBriefScreen({ game }) {
   const { view } = game;
   const r = view.round;
@@ -172,10 +172,10 @@ export function RoleBriefScreen({ game }) {
           <br />
           ONLY YOU SEE THIS
         </h1>
-        <h2 className="h1" style={{ fontSize: 30 }}>You&apos;re the Accomplice.</h2>
+        <h2 className="h1" style={{ fontSize: 30 }}>You&apos;re the Doppelganger.</h2>
         <p className="body">
-          You will get <b style={{ color: 'var(--text)' }}>+2 for every player that votes for YOU</b>. That means acting suspicious and
-          drawing attention away from the real Framer may help you out!
+          Act like the answer is yours! Mimic the Framer and convince everyone that YOU wrote it.{' '}
+          <b style={{ color: 'var(--text)' }}>+2 for every player that votes for you</b>.
         </p>
       </div>
       <p className="warn">
@@ -263,7 +263,7 @@ export function TeaseScreen({ game }) {
       <TopBar game={game} />
       {framer && (
         <div className="chip purple" style={{ alignSelf: 'flex-start' }}>
-          You&apos;re the Accomplice:{' '}
+          You&apos;re the Doppelganger:{' '}
           {r.framers.map((f) => nameOf(view, f.id)).join(' & ')} {r.framers.length > 1 ? 'are the Framers' : 'is the Framer'}
         </div>
       )}
@@ -399,7 +399,7 @@ export function RoleVotingScreen({ game }) {
             ? r.myPushId
               ? `Keep steering everyone toward ${nameOf(view, r.myPushId)}… but not so hard that the Framer spots you.`
               : 'You never picked anyone to push, so just play along.'
-            : 'Keep drawing suspicion onto yourself and away from the Framer!'}
+            : 'Keep acting like the answer is yours, so everyone picks you instead of the Framer!'}
         </p>
       </div>
       <FramerCards view={view} framers={r.framers} />
@@ -433,7 +433,7 @@ export function RevealScreen({ game }) {
     headline = caught ? 'Busted!' : 'You got away with it.';
     sub = r.vandalPushId ? `You pushed everyone toward ${n(r.vandalPushId)}.` : undefined;
   } else if (role === 'accomplice') {
-    kicker = 'YOU WERE THE ACCOMPLICE';
+    kicker = 'YOU WERE THE DOPPELGANGER';
     headline = myDelta >= 0 ? 'Nice cover!' : 'Not your night.';
   } else {
     const myVotes = r.votes[me] ?? {};
@@ -473,7 +473,7 @@ export function RevealScreen({ game }) {
       )}
       {r.accompliceId && (
         <div className="center h2" style={{ fontSize: 22 }}>
-          The Accomplice was <span style={{ color: 'var(--orange)' }}>{n(r.accompliceId)}</span>
+          The Doppelganger was <span style={{ color: 'var(--orange)' }}>{n(r.accompliceId)}</span>
         </div>
       )}
       <div className="spread" style={{ padding: '0 4px' }}>

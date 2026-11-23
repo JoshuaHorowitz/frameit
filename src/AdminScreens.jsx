@@ -14,7 +14,7 @@ function Header({ game, title, right }) {
 
 const ADD_ONS = [
   ['vandal', 'Saboteur'],
-  ['accomplice', 'Accomplice'],
+  ['accomplice', 'Doppelganger'],
   ['twoFramers', 'Two Framers'],
 ];
 
@@ -114,7 +114,7 @@ export function AdminSetup({ game, openSettings }) {
         {roleSelect(addOns.twoFramers ? 'Framer 1' : 'Framer', roles.framers[0], (id) => setRole({ framers: [id, roles.framers[1]] }))}
         {addOns.twoFramers && roleSelect('Framer 2', roles.framers[1], (id) => setRole({ framers: [roles.framers[0], id] }))}
         {addOns.vandal && roleSelect('Saboteur', roles.vandal, (id) => setRole({ vandal: id }))}
-        {addOns.accomplice && roleSelect('Accomplice', roles.accomplice, (id) => setRole({ accomplice: id }))}
+        {addOns.accomplice && roleSelect('Doppelganger', roles.accomplice, (id) => setRole({ accomplice: id }))}
         <p className="small">Random roles stay hidden from you so you can play along.</p>
       </div>
       <div className="stack" style={{ gap: 8 }}>
@@ -168,7 +168,7 @@ export function AdminLive({ game, openFramerScreen }) {
         <p className="small">
           You assigned: {known.framers ? `Framer ${known.framers.map(n).join(' & ')}` : ''}
           {known.vandalId ? ` · Saboteur ${n(known.vandalId)}` : ''}
-          {known.accompliceId ? ` · Accomplice ${n(known.accompliceId)}` : ''}
+          {known.accompliceId ? ` · Doppelganger ${n(known.accompliceId)}` : ''}
         </p>
       )}
       <div className="stack" style={{ gap: 8 }}>
@@ -279,7 +279,7 @@ export function AdminReview({ game }) {
           {rv.vandal.reversed ? ' · spotted!' : ''}
         </p>
       )}
-      {rv.accomplice && <p className="body">Accomplice <b style={{ color: 'var(--orange)' }}>{n(rv.accomplice.id)}</b></p>}
+      {rv.accomplice && <p className="body">Doppelganger <b style={{ color: 'var(--orange)' }}>{n(rv.accomplice.id)}</b></p>}
       <div className="stack" style={{ gap: 4 }}>
         <h2 className="label">Points preview</h2>
         {deltas.map(([id, d]) => (
@@ -431,14 +431,14 @@ export function AdminSettings({ game, back }) {
         <span className="label" style={{ marginTop: 8 }}>Saboteur</span>
         {num('Per vote on the person they push', P.saboteurPerVote, (v) => set({ points: { saboteurPerVote: v } }))}
         <span className="small">Spotted by the Framer: their points are reversed.</span>
-        <span className="label" style={{ marginTop: 8 }}>Accomplice</span>
+        <span className="label" style={{ marginTop: 8 }}>Doppelganger</span>
         {num('Per vote on them', P.accompliceVote, (v) => set({ points: { accompliceVote: v } }))}
         {num('Lost per vote on the Framer', P.accomplicePenalty, (v) => set({ points: { accomplicePenalty: v } }))}
       </div>
       <h1 className="h2">Randomize chances (0–1)</h1>
       <div className="card" style={{ gap: 4 }}>
         {num('Saboteur', settings.randomChances.vandal, (v) => set({ randomChances: { vandal: Math.min(1, v) } }), 0.05)}
-        {num('Accomplice', settings.randomChances.accomplice, (v) => set({ randomChances: { accomplice: Math.min(1, v) } }), 0.05)}
+        {num('Doppelganger', settings.randomChances.accomplice, (v) => set({ randomChances: { accomplice: Math.min(1, v) } }), 0.05)}
         {num('Two Framers', settings.randomChances.twoFramers, (v) => set({ randomChances: { twoFramers: Math.min(1, v) } }), 0.05)}
       </div>
       <h1 className="h2">Players</h1>
