@@ -26,8 +26,7 @@ export const PHASES = Object.freeze({
 
 export const DEFAULT_POINTS = Object.freeze({
   catchFramer: 3, // each voter who picks the Framer
-  voteOnTarget: 2, // Framer, per vote on their target
-  voteOnOther: 1, // Framer, per vote on anyone else
+  voteOnOther: 1, // Framer, per vote on anyone but them
   perfectFrame: 5, // Framer bonus when nobody caught them
   vandalPerCatch: 1, // Vandal, per player who caught a Framer
   catchVandal: 3, // Framer bonus for guessing the Vandal
@@ -36,9 +35,8 @@ export const DEFAULT_POINTS = Object.freeze({
 });
 
 export const DEFAULT_SETTINGS = Object.freeze({
-  timers: Object.freeze({ pickTarget: 15, answering: 30, voting: 60 }), // seconds
+  timers: Object.freeze({ roles: 8, answering: 30, voting: 60 }), // seconds
   framerGraceSeconds: 20,
-  targetOptions: 3,
   randomChances: Object.freeze({ vandal: 0.3, accomplice: 0.25, twoFramers: 0.15 }),
   points: DEFAULT_POINTS,
 });

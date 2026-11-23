@@ -139,7 +139,7 @@ export function AdminSetup({ game, openSettings }) {
 // ---------- Live round ----------
 
 const PHASE_STEPS = [
-  ['roles', 'Roles'],
+  ['roles', 'Briefing'],
   ['answering', 'Answering'],
   ['voting', 'Voting'],
 ];
@@ -172,7 +172,9 @@ export function AdminLive({ game, openFramerScreen }) {
         </p>
       )}
       <div className="stack" style={{ gap: 8 }}>
-        <div className="status-row">{live.targetsPicked === live.framerCount ? '✅' : '⏳'} Targets picked: {live.targetsPicked} of {live.framerCount}</div>
+        {view.phase === 'roles' && (
+          <div className="status-row">{live.framersReady === live.framerCount ? '✅' : '⏳'} Framer ready: {live.framersReady} of {live.framerCount}</div>
+        )}
         <div className="status-row">{live.answersSubmitted === live.framerCount ? '✅' : '⏳'} Answers submitted: {live.answersSubmitted} of {live.framerCount}</div>
         {view.phase === 'voting' && <div className="status-row">🗳️ Votes in: {live.votesIn} of {live.votesExpected}</div>}
         {view.phase === 'voting' && live.vandalGuessIn !== null && (
@@ -248,13 +250,12 @@ export function AdminReview({ game }) {
               <span className="small">{rv.question}</span>
               <p className="answer" style={{ fontSize: 24 }}>“{f.answer}”</p>
               <span style={{ fontSize: 15 }}>
-                <b>{n(f.id)}</b> framed <b style={{ color: 'var(--blue)' }}>{n(f.targetId)}</b>
+                <b>{n(f.id)}</b>&apos;s answer
                 {a.challenged && <b style={{ color: 'var(--red-soft)' }}> · challenged</b>}
               </span>
             </div>
             <div className="stack" style={{ gap: 4 }}>
               <h2 className="label">Votes</h2>
-              {a.onTarget.length > 0 && <VoteLine label={`${n(f.targetId)} (target)`} voters={a.onTarget.map(n)} />}
               {a.catchers.length > 0 && <VoteLine label={`${n(f.id)} (caught)`} voters={a.catchers.map(n)} />}
               {byOthers.map(([id, voters]) => <VoteLine key={id} label={n(id)} voters={voters.map(n)} />)}
               {a.voteCount === 0 && <p className="small">No votes.</p>}
@@ -411,15 +412,14 @@ export function AdminSettings({ game, back }) {
       )}
       <h1 className="h2">Timers (seconds)</h1>
       <div className="card" style={{ gap: 4 }}>
-        {num('Pick a target', settings.timers.pickTarget, (v) => set({ timers: { pickTarget: v } }))}
+        {num('Framer briefing', settings.timers.roles, (v) => set({ timers: { roles: v } }))}
         {num('Answering', settings.timers.answering, (v) => set({ timers: { answering: v } }))}
         {num('Discuss & vote', settings.timers.voting, (v) => set({ timers: { voting: v } }))}
       </div>
       <h1 className="h2">Points</h1>
       <div className="card" style={{ gap: 4 }}>
         {num('Catching the Framer', P.catchFramer, (v) => set({ points: { catchFramer: v } }))}
-        {num('Framer: vote on target', P.voteOnTarget, (v) => set({ points: { voteOnTarget: v } }))}
-        {num('Framer: vote on anyone else', P.voteOnOther, (v) => set({ points: { voteOnOther: v } }))}
+        {num('Framer: per wrong guess', P.voteOnOther, (v) => set({ points: { voteOnOther: v } }))}
         {num('Perfect Frame bonus', P.perfectFrame, (v) => set({ points: { perfectFrame: v } }))}
         {num('Vandal: per catch', P.vandalPerCatch, (v) => set({ points: { vandalPerCatch: v } }))}
         {num('Framer catches Vandal', P.catchVandal, (v) => set({ points: { catchVandal: v } }))}

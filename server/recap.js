@@ -27,7 +27,7 @@ export function buildRecap(result, names = {}, points = DEFAULT_POINTS) {
 
   // Who was who.
   const intro = answers.map(
-    (a) => `${name(a.framerId)} was ${two ? 'a' : 'the'} Framer this round, and framed ${name(a.targetId)}.`
+    (a) => `${name(a.framerId)} was ${two ? 'a' : 'the'} Framer this round.`
   );
   if (vandal) {
     intro.push(
@@ -48,14 +48,9 @@ export function buildRecap(result, names = {}, points = DEFAULT_POINTS) {
     if (a.voteCount === 0) {
       lines.push(`Nobody voted on ${framer}'s answer.`);
     } else {
-      if (a.onTarget.length > 0) {
-        lines.push(
-          `${names_(a.onTarget)} fell for it and voted for ${name(a.targetId)}, so ${framer} gets +${p.voteOnTarget}${a.onTarget.length > 1 ? ' each' : ''}.`
-        );
-      }
       for (const [suspectId, voters] of Object.entries(a.onOthers)) {
         lines.push(
-          `${names_(voters)} voted for ${name(suspectId)}, which gives ${framer} +${p.voteOnOther}${voters.length > 1 ? ' each' : ''}.`
+          `${names_(voters)} fell for it and voted for ${name(suspectId)}, which gives ${framer} +${p.voteOnOther}${voters.length > 1 ? ' each' : ''}.`
         );
       }
       if (a.catchers.length > 0) {

@@ -2,7 +2,7 @@
 // the same round always scores the same way, so it is easy to test.
 //
 // round = {
-//   framers: [{ id, targetId }],                  // one, or two in a Two-Framer round
+//   framers: [{ id }],                             // one, or two in a Two-Framer round
 //   vandalId: string | null,
 //   accompliceId: string | null,
 //   votes: { [voterId]: { [answerIndex]: suspectId } },
@@ -44,11 +44,10 @@ export function scoreRound(round, points = DEFAULT_POINTS, playerIds = []) {
   const answers = framers.map((framer, answerIndex) => {
     const cast = ballots.filter((b) => b.answerIndex === answerIndex);
     const catchers = cast.filter((b) => b.suspectId === framer.id).map((b) => b.voterId);
-    const onTarget = cast.filter((b) => b.suspectId === framer.targetId).map((b) => b.voterId);
 
-    const onOthers = {}; // suspectId -> voterIds
+    const onOthers = {}; // suspectId -> voterIds (everyone who guessed wrong)
     for (const b of cast) {
-      if (b.suspectId === framer.id || b.suspectId === framer.targetId) continue;
+      if (b.suspectId === framer.id) continue;
       (onOthers[b.suspectId] ??= []).push(b.voterId);
     }
     const otherCount = Object.values(onOthers).reduce((n, list) => n + list.length, 0);
@@ -59,15 +58,13 @@ export function scoreRound(round, points = DEFAULT_POINTS, playerIds = []) {
     const isChallenged = challenged.has(answerIndex);
     const framerPoints = isChallenged
       ? 0
-      : onTarget.length * p.voteOnTarget + otherCount * p.voteOnOther + (perfect ? p.perfectFrame : 0);
+      : otherCount * p.voteOnOther + (perfect ? p.perfectFrame : 0);
     add(framer.id, framerPoints);
 
     return {
       answerIndex,
       framerId: framer.id,
-      targetId: framer.targetId,
       voteCount: cast.length,
-      onTarget,
       onOthers,
       catchers,
       perfect,

@@ -39,23 +39,23 @@ function makeRound({ adminAssignsFramer = true } = {}) {
   return { state, act, random };
 }
 
-test('roles phase: voters learn nothing; Vandal and Accomplice see Framer and target', () => {
+test('voters learn nothing; Vandal and Accomplice see the Framer', () => {
   const { state, act } = makeRound();
   const framerId = state.round.framers[0].id;
-  act(as(framerId), 'pickTarget', { targetId: state.round.framers[0].targetOptions[0] });
+  act(as(framerId), 'ready');
   // now answering
   const accompliceId = state.round.accompliceId;
   const voterId = state.round.voterIds[0];
 
   const voter = buildView(state, as(voterId));
   assert.equal(voter.you.role, 'voter');
-  for (const k of ['framers', 'targetId', 'targetOptions', 'vandalId', 'accompliceId', 'question', 'messages', 'vandalPresent']) {
+  for (const k of ['framers', 'vandalId', 'accompliceId', 'question', 'messages', 'vandalPresent']) {
     assert.ok(!keysDeep(voter.round).has(k), `voter must not see ${k}`);
   }
 
   const vandal = buildView(state, as('sam'));
   assert.equal(vandal.you.role, 'vandal');
-  assert.deepEqual(vandal.round.framers, [{ id: framerId, targetId: state.round.framers[0].targetId }]);
+  assert.deepEqual(vandal.round.framers, [{ id: framerId }]);
   assert.ok(!keysDeep(vandal.round).has('accompliceId'), 'the Vandal does not learn about the Accomplice');
 
   const acc = buildView(state, as(accompliceId));
@@ -71,7 +71,7 @@ test('roles phase: voters learn nothing; Vandal and Accomplice see Framer and ta
 test('teasing messages: the Framer sees all with names, senders see only their own', () => {
   const { state, act } = makeRound();
   const framer = state.round.framers[0];
-  act(as(framer.id), 'pickTarget', { targetId: framer.targetOptions[0] });
+  act(as(framer.id), 'ready');
   const [a, b] = state.round.voterIds;
   act(as(a), 'sendMessage', { text: 'from a' });
   act(as(b), 'sendMessage', { text: 'from b' });
@@ -84,7 +84,7 @@ test('teasing messages: the Framer sees all with names, senders see only their o
 test('voting: answers have no author; the Framer now learns a Vandal exists (not who)', () => {
   const { state, act, random } = makeRound();
   const framer = state.round.framers[0];
-  act(as(framer.id), 'pickTarget', { targetId: framer.targetOptions[0] });
+  act(as(framer.id), 'ready');
   act(as(framer.id), 'submitAnswer', { text: 'Spiders' });
   tick(state, 30_000, random);
   assert.equal(state.phase, 'voting');
@@ -110,14 +110,14 @@ test('admin: random roles stay hidden until Review, assigned roles are shown', (
   const random = makeRound({ adminAssignsFramer: false });
   const hidden = buildView(random.state, ADMIN).admin.live;
   assert.equal(hidden.knownRoles.framers, null);
-  assert.equal(hidden.targetsPicked, 0);
-  assert.ok(!keysDeep(hidden).has('targetId'));
+  assert.equal(hidden.framersReady, 0);
+  assert.ok(!keysDeep(hidden).has('id'), 'no player ids at all while roles are random');
 });
 
 test('review keeps players in the dark; reveal shows everyone everything', () => {
   const { state, act, random } = makeRound();
   const framer = state.round.framers[0];
-  act(as(framer.id), 'pickTarget', { targetId: framer.targetOptions[0] });
+  act(as(framer.id), 'ready');
   act(as(framer.id), 'submitAnswer', { text: 'Spiders' });
   tick(state, 30_000, random);
   tick(state, 90_000, random);
@@ -134,5 +134,5 @@ test('review keeps players in the dark; reveal shows everyone everything', () =>
   assert.equal(after.revealed, true);
   assert.equal(after.vandalId, 'sam');
   assert.equal(after.accompliceId, state.round.accompliceId);
-  assert.equal(after.framers[0].targetId, framer.targetId);
+  assert.equal(after.framers[0].answer, 'Spiders');
 });
