@@ -154,7 +154,9 @@ export default function App() {
 
   let content;
   if (status === 'kicked') {
-    content = <JoinScreen onJoin={joinAs} status="idle" />;
+    content = <JoinScreen onJoin={joinAs} status="idle" message="You were removed from the game." />;
+  } else if (status === 'reset') {
+    content = <JoinScreen onJoin={joinAs} status="idle" message="A new game is starting. Join again!" />;
   } else if (status === 'replaced') {
     content = (
       <Waiting

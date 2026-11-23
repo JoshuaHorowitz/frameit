@@ -215,6 +215,25 @@ test('two-framer round with random roles and the Accomplice', () => {
   assert.equal(new Set(ids).size, 3, 'nobody holds two roles');
 });
 
+test('resetGame clears players, scores and rounds but keeps settings and custom questions', () => {
+  const ctx = setupGame();
+  const { state, act } = ctx;
+  act(ADMIN, 'updateSettings', { settings: { timers: { voting: 90 } } });
+  act(ADMIN, 'addQuestion', { text: 'Who makes the best latkes?' });
+  startMockupRound(ctx);
+  state.players.maya.score = 12;
+  assert.throws(() => act(as('maya'), 'resetGame'), { code: 'not_admin' });
+  assert.deepEqual(act(ADMIN, 'resetGame'), { reset: true });
+  assert.equal(state.phase, 'lobby');
+  assert.deepEqual(state.players, {});
+  assert.equal(state.round, null);
+  assert.equal(state.roundNumber, 0);
+  assert.equal(state.settings.timers.voting, 90);
+  assert.deepEqual(state.customQuestions, ['Who makes the best latkes?']);
+  join(state, 'Maya');
+  assert.equal(state.players.maya.score, 0);
+});
+
 test('updateSettings only accepts known numeric settings', () => {
   const { state, act } = setupGame();
   act(ADMIN, 'updateSettings', { settings: { points: { catchFramer: 4, bogus: 9 }, timers: { voting: 'x' } } });

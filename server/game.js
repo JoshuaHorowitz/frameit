@@ -523,6 +523,16 @@ const adminActions = {
   updateSettings(state, actor, { settings }) {
     state.settings = mergeSettings(state.settings, settings);
   },
+
+  // Wipe players, scores and rounds and go back to an empty lobby.
+  // Settings and the admin's custom questions are kept.
+  resetGame(state) {
+    const { settings, customQuestions } = state;
+    const fresh = createState(settings);
+    for (const key of Object.keys(state)) delete state[key];
+    Object.assign(state, fresh, { customQuestions, adminConnected: true });
+    return { reset: true };
+  },
 };
 
 // Apply one action. `actor` is { isAdmin, playerId }.

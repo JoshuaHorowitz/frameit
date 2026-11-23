@@ -73,6 +73,7 @@ export class GameRoom extends Server {
         applyAction(state, actor, message, Date.now(), Math.random)
       );
       if (effects?.kicked) this.kick(effects.kicked);
+      if (effects?.reset) this.resetConnections();
     } catch (error) {
       const code = error instanceof GameError ? error.code : 'server_error';
       if (!(error instanceof GameError)) console.error(error);
@@ -105,6 +106,16 @@ export class GameRoom extends Server {
       conn.setState(null);
       conn.send(JSON.stringify({ type: 'kicked' }));
       conn.close(4001, 'Removed by the admin');
+    }
+  }
+
+  // After a reset every player phone goes back to the Join screen.
+  // Their sockets stay open, so they can join the new game straight away.
+  resetConnections() {
+    for (const conn of this.getConnections()) {
+      if (!conn.state || conn.state.isAdmin) continue;
+      conn.setState(null);
+      conn.send(JSON.stringify({ type: 'reset' }));
     }
   }
 

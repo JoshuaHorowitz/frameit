@@ -63,7 +63,9 @@ export function useGame() {
       setStatus('open');
       ws.send(JSON.stringify({ type: 'join', name }));
     });
-    ws.addEventListener('close', () => setStatus((s) => (s === 'kicked' || s === 'replaced' ? s : 'closed')));
+    ws.addEventListener('close', () =>
+      setStatus((s) => (s === 'kicked' || s === 'replaced' || s === 'reset' ? s : 'closed'))
+    );
     ws.addEventListener('message', (event) => {
       let msg;
       try {
@@ -87,6 +89,12 @@ export function useGame() {
           saveName('');
           setName('');
         }
+      } else if (msg.type === 'reset') {
+        // The admin started a new game: forget this player and show Join again.
+        saveName('');
+        setView(null);
+        setStatus('reset');
+        setName(''); // closes this socket; joining again opens a fresh one
       } else if (msg.type === 'kicked' || msg.type === 'replaced') {
         setStatus(msg.type);
         ws.close();
