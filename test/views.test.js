@@ -25,7 +25,7 @@ function keysDeep(value, out = new Set()) {
 }
 
 function makeRound({ adminAssignsFramer = true } = {}) {
-  const state = createState();
+  const state = createState({ timers: { answering: 30 } });
   for (const n of ['Maya', 'Noah', 'Sam', 'Lily', 'Ben', 'Dana']) join(state, n);
   const random = seeded();
   const now = 0;

@@ -451,6 +451,18 @@ const adminActions = {
     cancelRound(state, random, now, 'The admin cancelled the round.');
   },
 
+  // Move on without waiting for the timer. From answering this needs every
+  // Framer to have marked their answer done, so nobody is cut off mid-sentence.
+  skipAhead(state, actor, _payload, now, random) {
+    requirePhase(state, ...ROUND_PHASES);
+    const round = state.round;
+    if (state.phase === P.ANSWERING && !round.framers.every((f) => f.answer)) {
+      fail('not_ready', 'Wait until the Framer has marked their answer done.');
+    }
+    if (state.phase === P.VOTING) finishVoting(state);
+    else advance(state, now, random);
+  },
+
   challenge(state, actor, { answerIndex = 0 }) {
     requirePhase(state, P.REVIEW);
     const index = Number(answerIndex);

@@ -175,7 +175,7 @@ export function AdminLive({ game, openFramerScreen }) {
         {view.phase === 'roles' && (
           <div className="status-row">{live.framersReady === live.framerCount ? '✅' : '⏳'} Framer ready: {live.framersReady} of {live.framerCount}</div>
         )}
-        <div className="status-row">{live.answersSubmitted === live.framerCount ? '✅' : '⏳'} Answers submitted: {live.answersSubmitted} of {live.framerCount}</div>
+        <div className="status-row">{live.answersSubmitted === live.framerCount ? '✅' : '⏳'} Framer done answering: {live.answersSubmitted} of {live.framerCount}</div>
         {live.saboteurChose !== null && view.phase !== 'voting' && (
           <div className="status-row">{live.saboteurChose ? '✅' : '⏳'} Saboteur has {live.saboteurChose ? 'chosen' : 'not chosen'} who to push</div>
         )}
@@ -191,6 +191,7 @@ export function AdminLive({ game, openFramerScreen }) {
       </div>
       <p className="small center">Contents stay hidden until Review.</p>
       <div className="grid2 push-down">
+        <SkipAheadButton view={view} live={live} send={send} />
         <button className="btn secondary" onClick={() => send('addTime', { seconds: 15 })}>+15 seconds</button>
         <button className="btn secondary" onClick={() => send(paused ? 'resume' : 'pause')}>{paused ? 'Resume' : 'Pause'}</button>
         <button className="btn danger" style={{ gridColumn: 'span 2' }} onClick={() => window.confirm('Cancel this round? Nobody gets points.') && send('cancelRound')}>
@@ -198,6 +199,26 @@ export function AdminLive({ game, openFramerScreen }) {
         </button>
       </div>
     </Screen>
+  );
+}
+
+// Lets the admin move on early: start answering once the Framer is ready,
+// start voting once every answer is marked done, or end voting.
+function SkipAheadButton({ view, live, send }) {
+  const allDone = live.answersSubmitted === live.framerCount;
+  const label =
+    view.phase === 'roles'
+      ? 'Show the question now'
+      : view.phase === 'answering'
+        ? allDone
+          ? `${live.framerCount > 1 ? 'Both answers are' : 'Answer is'} in: start voting`
+          : `Waiting for ${live.framerCount > 1 ? 'the Framers' : 'the Framer'} to finish…`
+        : 'End voting now';
+  const disabled = view.phase === 'answering' && !allDone;
+  return (
+    <button className="btn" style={{ gridColumn: 'span 2' }} disabled={disabled} onClick={() => send('skipAhead')}>
+      {label}
+    </button>
   );
 }
 

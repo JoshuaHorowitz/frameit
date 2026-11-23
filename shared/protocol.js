@@ -38,7 +38,7 @@ export const DEFAULT_POINTS = Object.freeze({
 });
 
 export const DEFAULT_SETTINGS = Object.freeze({
-  timers: Object.freeze({ roles: 8, answering: 30, voting: 60 }), // seconds
+  timers: Object.freeze({ roles: 8, answering: 60, voting: 60 }), // seconds; the admin can skip ahead
   framerGraceSeconds: 20,
   randomChances: Object.freeze({ vandal: 0.3, accomplice: 0.25, twoFramers: 0.15 }),
   points: DEFAULT_POINTS,

@@ -229,9 +229,9 @@ export function FramerAnswerScreen({ game }) {
         <label htmlFor="answer" className="small">Your honest answer</label>
         <textarea id="answer" className="textarea" rows={3} maxLength={200} value={text} onChange={(e) => onChange(e.target.value)} />
         <button className="btn" disabled={!text.trim() || submitted} onClick={() => send('submitAnswer', { text })}>
-          {submitted ? 'Submitted ✓' : r.myAnswer ? 'Update answer' : 'Submit answer'}
+          {submitted ? 'Done ✓' : r.myAnswer ? 'Update my answer' : "I'm done"}
         </button>
-        {submitted && <p className="small">You can still edit until time runs out.</p>}
+        {submitted && <p className="small">The admin can see you&apos;re done. You can still edit until they move on.</p>}
       </div>
       <h2 className="small" style={{ fontWeight: 600 }}>Incoming messages · don&apos;t crack</h2>
       <div className="feed">
