@@ -20,6 +20,26 @@ const saveName = (name) => {
   }
 };
 
+// A connection id that works on plain-http LAN addresses too. Phones opening
+// http://192.168.x.x:5173 are not a "secure context", so crypto.randomUUID()
+// is missing there; partysocket would otherwise try to use it.
+function connectionId() {
+  const key = 'frameit:conn';
+  try {
+    const existing = sessionStorage.getItem(key);
+    if (existing) return existing;
+  } catch {
+    /* ignore */
+  }
+  const id = `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 10)}`;
+  try {
+    sessionStorage.setItem(key, id);
+  } catch {
+    /* ignore */
+  }
+  return id;
+}
+
 // Owns the WebSocket. Returns the latest private view from the server,
 // a send() for actions, and the offset between this phone's clock and the server's.
 export function useGame() {
@@ -37,6 +57,7 @@ export function useGame() {
       host: import.meta.env.VITE_SERVER_HOST || window.location.host,
       party: 'game-room',
       room: ROOM,
+      id: connectionId(),
     });
     ws.addEventListener('open', () => {
       setStatus('open');
