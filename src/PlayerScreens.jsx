@@ -19,7 +19,7 @@ export function JoinScreen({ onJoin, status, playerCount, message }) {
           <Logo />
         </h1>
         <p className="body">
-          Answer it. Frame someone.
+          Answer honestly. Guess who.
           <br />
           Don&apos;t crack.
         </p>
@@ -108,15 +108,15 @@ export function FramerIntroScreen({ game }) {
         </span>
         <h1 className="h1" style={{ fontSize: 40 }}>You&apos;re the Framer.</h1>
         <p className="body">
-          In a moment you&apos;ll get a question. <b style={{ color: 'var(--text)' }}>Answer it truthfully</b>, then frame it away from
-          you: make the room believe someone else wrote it.
+          In a moment you&apos;ll get a question. <b style={{ color: 'var(--text)' }}>Answer it honestly</b>. Everyone else will try to
+          work out that it was you. How well do they really know you?
         </p>
         {r.secondFramerExists && <p className="body">There&apos;s a second Framer this round. You don&apos;t know who.</p>}
       </div>
       <div className="card">
         <span className="label">How you score</span>
-        <p className="body"><b style={{ color: 'var(--gold)' }}>+1</b> for every person who guesses someone else</p>
-        <p className="body"><b style={{ color: 'var(--gold)' }}>+5</b> bonus if nobody catches you</p>
+        <p className="body"><b style={{ color: 'var(--gold)' }}>+1</b> for every person who picks you</p>
+        <p className="body">No hints or confessions, though. Let your answer speak for itself!</p>
       </div>
       <button className="btn push-down" onClick={() => send('ready')}>
         I&apos;m ready
@@ -125,12 +125,46 @@ export function FramerIntroScreen({ game }) {
   );
 }
 
-export function RoleBriefScreen({ game, role }) {
+export function SaboteurScreen({ game }) {
+  const { view, send } = game;
+  const r = view.round;
+  const framerIds = new Set(r.framers.map((f) => f.id));
+  const options = view.players.filter((p) => p.id !== view.you.id && !framerIds.has(p.id) && !p.waiting);
+  const framerNames = r.framers.map((f) => nameOf(view, f.id)).join(' & ');
+  return (
+    <Screen theme="vandal">
+      <TopBar game={game} />
+      <div className="stack">
+        <h1 className="secret-head">SECRET!! ONLY YOU SEE THIS</h1>
+        <h2 className="h1" style={{ fontSize: 30 }}>You&apos;re the Saboteur.</h2>
+        <p className="body">
+          <b style={{ color: 'var(--text)' }}>{framerNames}</b> {r.framers.length > 1 ? 'are answering' : 'is answering'} this question.
+          Pick someone else and get everyone to vote for them! <b style={{ color: 'var(--text)' }}>+2 for every vote</b> on your pick.
+        </p>
+      </div>
+      <div className="card" style={{ gap: 6 }}>
+        <span className="label">The question</span>
+        <span className="h2" style={{ fontSize: 20 }}>{r.question}</span>
+      </div>
+      <div className="stack" style={{ gap: 10 }}>
+        <h2 className="small" style={{ fontWeight: 600 }}>
+          {r.myPushId ? `You're steering everyone toward ${nameOf(view, r.myPushId)}. Tap to change.` : 'Who will you push everyone toward?'}
+        </h2>
+        <PlayerGrid players={options} selected={r.myPushId} purple onPick={(id) => send('choosePush', { suspectId: id })} />
+      </div>
+      <p className="warn push-down">
+        But <b><i>be careful</i></b>: if the Framer spots you, your points get reversed!
+      </p>
+    </Screen>
+  );
+}
+
+// The Doppelganger's briefing (the Saboteur has its own screen above).
+export function RoleBriefScreen({ game }) {
   const { view } = game;
   const r = view.round;
-  const vandal = role === 'vandal';
   return (
-    <Screen theme={role}>
+    <Screen theme="accomplice">
       <TopBar game={game} showBar={false} />
       <div className="stack" style={{ marginTop: 8 }}>
         <h1 className="secret-head">
@@ -138,27 +172,14 @@ export function RoleBriefScreen({ game, role }) {
           <br />
           ONLY YOU SEE THIS
         </h1>
-        <h2 className="h1" style={{ fontSize: 30 }}>You&apos;re the {vandal ? 'Snitch' : 'Accomplice'}.</h2>
-        {vandal ? (
-          <p className="body">
-            You will get <b style={{ color: 'var(--text)' }}>+1 for every player that catches the Framer</b>. Drop hints and lead others to get the most points for yourself this round!
-          </p>
-        ) : (
-          <p className="body">
-            You will get <b style={{ color: 'var(--text)' }}>+2 for every player that votes for YOU</b>. That means acting suspicious and drawing attention away from the real Framer may help you out!
-          </p>
-        )}
+        <h2 className="h1" style={{ fontSize: 30 }}>You&apos;re the Doppelganger.</h2>
+        <p className="body">
+          Act like the answer is yours! Mimic the Framer and convince everyone that YOU wrote it.{' '}
+          <b style={{ color: 'var(--text)' }}>+2 for every player that votes for you</b>.
+        </p>
       </div>
       <p className="warn">
-        {vandal ? (
-          <>
-            But <b><i>be careful</i></b>: the Framer will reverse your points if they catch YOU!!
-          </>
-        ) : (
-          <>
-            But <b><i>be careful</i></b>, because for every vote for the Framer, YOU will get <b>−1</b>!
-          </>
-        )}
+        But <b><i>be careful</i></b>, because for every vote for the Framer, YOU will get <b>−1</b>!
       </p>
       <FramerCards view={view} framers={r.framers} />
       <p className="small center push-down">Waiting for the Framer to answer…</p>
@@ -205,12 +226,12 @@ export function FramerAnswerScreen({ game }) {
       <div className="card">
         <span className="label">The question</span>
         <h1 className="h2" style={{ fontSize: 28 }}>{r.question}</h1>
-        <label htmlFor="answer" className="small">Your answer: true for you, but don&apos;t make it obvious it&apos;s yours</label>
+        <label htmlFor="answer" className="small">Your honest answer</label>
         <textarea id="answer" className="textarea" rows={3} maxLength={200} value={text} onChange={(e) => onChange(e.target.value)} />
         <button className="btn" disabled={!text.trim() || submitted} onClick={() => send('submitAnswer', { text })}>
-          {submitted ? 'Submitted ✓' : r.myAnswer ? 'Update answer' : 'Submit answer'}
+          {submitted ? 'Done ✓' : r.myAnswer ? 'Update my answer' : "I'm done"}
         </button>
-        {submitted && <p className="small">You can still edit until time runs out.</p>}
+        {submitted && <p className="small">The admin can see you&apos;re done. You can still edit until they move on.</p>}
       </div>
       <h2 className="small" style={{ fontWeight: 600 }}>Incoming messages · don&apos;t crack</h2>
       <div className="feed">
@@ -238,19 +259,17 @@ export function TeaseScreen({ game }) {
   }, [r.myMessages?.length]);
   const framer = r.framers?.[0];
   return (
-    <Screen theme={role === 'vandal' || role === 'accomplice' ? role : undefined}>
+    <Screen theme={role === 'accomplice' ? role : undefined}>
       <TopBar game={game} />
       {framer && (
         <div className="chip purple" style={{ alignSelf: 'flex-start' }}>
-          You&apos;re the {role === 'vandal' ? 'Snitch' : 'Accomplice'}:{' '}
+          You&apos;re the Doppelganger:{' '}
           {r.framers.map((f) => nameOf(view, f.id)).join(' & ')} {r.framers.length > 1 ? 'are the Framers' : 'is the Framer'}
         </div>
       )}
       {framer && (
         <p className="small" style={{ color: 'var(--text-soft)' }}>
-          {role === 'vandal'
-            ? '+1 for every player who catches the Framer. If the Framer catches you, your points flip negative!'
-            : '+2 for every vote on you, −1 for every vote on the Framer.'}
+          +2 for every vote on you, −1 for every vote on the Framer.
         </p>
       )}
       <div className="stack">
@@ -328,10 +347,10 @@ export function FramerVotingScreen({ game }) {
       <Screen>
         <TopBar game={game} left={<span className="chip gold">You&apos;re the Framer</span>} />
         <div className="stack center" style={{ marginTop: '20vh' }}>
-          <h1 className="h1">Blend in.</h1>
+          <h1 className="h1">Do they know you?</h1>
           <p className="body">
-            Everyone&apos;s trying to work out who wrote your answer. Join the discussion like you&apos;re guessing too, and nudge
-            suspicion onto someone else.
+            Everyone&apos;s trying to work out who wrote your answer. Join the discussion like everyone else, but no hints! You get +1
+            for every person who picks you.
           </p>
         </div>
         <div className="push-down"><VotesIn round={r} /></div>
@@ -343,9 +362,9 @@ export function FramerVotingScreen({ game }) {
       <TopBar game={game} left={<span className="chip gold">You&apos;re the Framer</span>} />
       <div className="stack" style={{ marginTop: 6 }}>
         <h1 className="shout">SURPRISE!!</h1>
-        <h2 className="h2">There was a “Snitch” this round</h2>
+        <h2 className="h2">There was a “Saboteur” this round</h2>
         <p className="body">
-          That means someone in the room has been trying to oust you as the Framer this entire time! Guess who they are for{' '}
+          That means someone in the room has been secretly steering everyone away from you this entire time! Spot them for{' '}
           <b style={{ color: 'var(--gold)' }}>+3</b>!
         </p>
       </div>
@@ -353,7 +372,7 @@ export function FramerVotingScreen({ game }) {
       <div className="push-down stack">
         <div className="status-row spread"><span className="small">Voting in progress</span><b>{r.votesIn} of {r.votesExpected} in</b></div>
         <p className="small center">
-          Blend in while you guess. Keep nudging suspicion onto someone else.
+          Join the discussion like everyone else, but no hints! You get +1 for every person who picks you.
         </p>
       </div>
     </Screen>
@@ -377,8 +396,10 @@ export function RoleVotingScreen({ game }) {
         <h1 className="h2">You don&apos;t vote this round.</h1>
         <p className="body">
           {role === 'vandal'
-            ? 'Keep steering people toward the Framer… but not so hard that they spot you.'
-            : 'Keep drawing suspicion onto yourself and away from the Framer!'}
+            ? r.myPushId
+              ? `Keep steering everyone toward ${nameOf(view, r.myPushId)}… but not so hard that the Framer spots you.`
+              : 'You never picked anyone to push, so just play along.'
+            : 'Keep acting like the answer is yours, so everyone picks you instead of the Framer!'}
         </p>
       </div>
       <FramerCards view={view} framers={r.framers} />
@@ -404,20 +425,21 @@ export function RevealScreen({ game }) {
     const i = r.framers.findIndex((f) => f.id === me);
     const catchers = Object.values(r.votes).filter((v) => v[i] === me).length;
     kicker = 'YOU WERE THE FRAMER';
-    headline = catchers === 0 ? 'Perfect Frame!' : `${catchers} caught you.`;
+    headline = catchers === 0 ? 'Nobody knew it was you!' : `${catchers} ${catchers === 1 ? 'person' : 'people'} knew it was you!`;
     sub = `Your answer: “${r.framers[i].answer}”`;
   } else if (role === 'vandal') {
     const caught = r.framers.some((f) => r.vandalGuesses[f.id] === me);
-    kicker = 'YOU WERE THE SNITCH';
+    kicker = 'YOU WERE THE SABOTEUR';
     headline = caught ? 'Busted!' : 'You got away with it.';
+    sub = r.vandalPushId ? `You pushed everyone toward ${n(r.vandalPushId)}.` : undefined;
   } else if (role === 'accomplice') {
-    kicker = 'YOU WERE THE ACCOMPLICE';
+    kicker = 'YOU WERE THE DOPPELGANGER';
     headline = myDelta >= 0 ? 'Nice cover!' : 'Not your night.';
   } else {
     const myVotes = r.votes[me] ?? {};
     const right = r.framers.filter((f, i) => myVotes[i] === f.id).length;
     const voted = Object.keys(myVotes).length;
-    kicker = right > 0 ? 'NICE DETECTIVE WORK' : 'YOU GOT FRAMED';
+    kicker = right > 0 ? 'YOU KNOW THEM WELL' : 'NOT THIS TIME';
     headline = right === r.framers.length ? 'You got it!' : right > 0 ? 'Half right!' : 'Not quite.';
     sub = voted ? `You voted for ${r.framers.map((_, i) => (myVotes[i] ? n(myVotes[i]) : 'nobody')).join(' and ')}.` : "You didn't vote.";
   }
@@ -440,17 +462,18 @@ export function RevealScreen({ game }) {
       ))}
       {r.vandalId && (
         <div className="stack center" style={{ gap: 4 }}>
-          <span className="h2" style={{ fontSize: 26 }}>The Snitch was <span style={{ color: 'var(--purple)' }}>{n(r.vandalId)}</span></span>
+          <span className="h2" style={{ fontSize: 26 }}>The Saboteur was <span style={{ color: 'var(--purple)' }}>{n(r.vandalId)}</span></span>
+          {r.vandalPushId && <span className="body">…trying to get everyone to pick <b>{n(r.vandalPushId)}</b>!</span>}
           {r.framers.some((f) => r.vandalGuesses[f.id] === r.vandalId) && (
             <span style={{ fontSize: 18, fontWeight: 600, color: 'var(--purple)' }}>
-              …and {r.framers.filter((f) => r.vandalGuesses[f.id] === r.vandalId).map((f) => n(f.id)).join(' and ')} caught them!
+              {r.framers.filter((f) => r.vandalGuesses[f.id] === r.vandalId).map((f) => n(f.id)).join(' and ')} spotted them!
             </span>
           )}
         </div>
       )}
       {r.accompliceId && (
         <div className="center h2" style={{ fontSize: 22 }}>
-          The Accomplice was <span style={{ color: 'var(--orange)' }}>{n(r.accompliceId)}</span>
+          The Doppelganger was <span style={{ color: 'var(--orange)' }}>{n(r.accompliceId)}</span>
         </div>
       )}
       <div className="spread" style={{ padding: '0 4px' }}>

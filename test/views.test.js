@@ -25,7 +25,7 @@ function keysDeep(value, out = new Set()) {
 }
 
 function makeRound({ adminAssignsFramer = true } = {}) {
-  const state = createState();
+  const state = createState({ timers: { answering: 30 } });
   for (const n of ['Maya', 'Noah', 'Sam', 'Lily', 'Ben', 'Dana']) join(state, n);
   const random = seeded();
   const now = 0;
@@ -49,13 +49,17 @@ test('voters learn nothing; Snitch and Accomplice see the Framer', () => {
 
   const voter = buildView(state, as(voterId));
   assert.equal(voter.you.role, 'voter');
-  for (const k of ['framers', 'vandalId', 'accompliceId', 'question', 'messages', 'vandalPresent']) {
+  for (const k of ['framers', 'vandalId', 'vandalPushId', 'myPushId', 'accompliceId', 'question', 'messages', 'vandalPresent']) {
     assert.ok(!keysDeep(voter.round).has(k), `voter must not see ${k}`);
   }
 
   const vandal = buildView(state, as('sam'));
   assert.equal(vandal.you.role, 'vandal');
   assert.deepEqual(vandal.round.framers, [{ id: framerId }]);
+  assert.equal(vandal.round.question, state.round.question, 'the Saboteur sees the question to choose who to push');
+  act(as('sam'), 'choosePush', { suspectId: voterId });
+  assert.equal(buildView(state, as('sam')).round.myPushId, voterId);
+  assert.ok(!keysDeep(buildView(state, as(framerId)).round).has('myPushId'), 'the Framer never sees who is being pushed');
   assert.ok(!keysDeep(vandal.round).has('accompliceId'), 'the Snitch does not learn about the Accomplice');
 
   const acc = buildView(state, as(accompliceId));

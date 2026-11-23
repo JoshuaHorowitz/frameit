@@ -24,21 +24,21 @@ export const PHASES = Object.freeze({
   FINAL: 'final',
 });
 
-// Naming note: the role players see as "the Snitch" is called `vandal` in the
+// Naming note: the role players see as "the Saboteur" is called `vandal` in the
 // code and the saved game state (its original name), e.g. vandalId,
-// catchVandal, guessVandal. Only the words on screen changed.
+// vandalPushId, catchVandal, guessVandal. Likewise "the Doppelganger" is
+// `accomplice` in code (accompliceId, accompliceVote). Only the words on screen changed.
 export const DEFAULT_POINTS = Object.freeze({
   catchFramer: 3, // each voter who picks the Framer
-  voteOnOther: 1, // Framer, per vote on anyone but them
-  perfectFrame: 5, // Framer bonus when nobody caught them
-  vandalPerCatch: 1, // Snitch, per player who caught a Framer
-  catchVandal: 3, // Framer bonus for guessing the Snitch
-  accompliceVote: 2, // Accomplice, per vote on themselves
-  accomplicePenalty: 1, // Accomplice loses this per vote on any Framer
+  framerPerCatch: 1, // Framer, per person who picks them ("the room knows you")
+  saboteurPerVote: 2, // Saboteur, per vote on the person they're pushing
+  catchVandal: 3, // Framer bonus for spotting the Saboteur
+  accompliceVote: 2, // Doppelganger, per vote on themselves
+  accomplicePenalty: 1, // Doppelganger loses this per vote on any Framer
 });
 
 export const DEFAULT_SETTINGS = Object.freeze({
-  timers: Object.freeze({ roles: 8, answering: 30, voting: 60 }), // seconds
+  timers: Object.freeze({ roles: 8, answering: 60, voting: 60 }), // seconds; the admin can skip ahead
   framerGraceSeconds: 20,
   randomChances: Object.freeze({ vandal: 0.3, accomplice: 0.25, twoFramers: 0.15 }),
   points: DEFAULT_POINTS,

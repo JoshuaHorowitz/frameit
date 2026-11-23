@@ -12,7 +12,7 @@ export default defineConfig({
       manifest: {
         name: 'FrameIt',
         short_name: 'FrameIt',
-        description: 'Answer it. Frame someone. Don’t crack.',
+        description: 'Answer honestly. Guess who. Don’t crack.',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',

@@ -1,8 +1,8 @@
 # FrameIt
 
 A phone-based party game for the family Chanukah party. Each round, a secret
-Framer answers a question truthfully while trying to make everyone believe
-someone else wrote it. Everyone else tries to work out who the Framer is.
+Framer answers a question honestly, and everyone else tries to work out who
+wrote it. How well do you really know each other?
 
 - Players join on their phones (installable to the home screen as a PWA).
 - The admin runs the game from their own phone by joining as **Josh Horowitz**.

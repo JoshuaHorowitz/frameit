@@ -17,7 +17,7 @@ const as = (id) => ({ isAdmin: false, playerId: id });
 const NAMES = ['Maya', 'Noah', 'Sam', 'Aunt Sarah', 'Grandpa', 'Lily', 'Ben', 'Dana'];
 
 function setupGame({ now = 1_000_000, random = seeded() } = {}) {
-  const state = createState();
+  const state = createState({ timers: { answering: 30 } }); // tests use a 30 s answer timer
   for (const n of NAMES) join(state, n);
   join(state, 'Josh Horowitz');
   const act = (actor, type, payload = {}, at = now) => applyAction(state, actor, { type, ...payload }, at, random);
@@ -73,9 +73,13 @@ test('full round: roles -> answering -> voting -> review -> recap -> scoreboard'
   act(as('lily'), 'sendMessage', { text: 'stop smiling' });
   assert.throws(() => act(as('maya'), 'sendMessage', { text: 'hi' }), { code: 'not_allowed' });
   act(as('maya'), 'submitAnswer', { text: 'Spiders. Big ones.' });
+  assert.throws(() => act(as('sam'), 'choosePush', { suspectId: 'maya' }), { code: 'bad_suspect' });
+  assert.throws(() => act(as('lily'), 'choosePush', { suspectId: 'noah' }), { code: 'not_saboteur' });
+  act(as('sam'), 'choosePush', { suspectId: 'noah' });
 
   tick(state, now + 30_000, ctx.random);
   assert.equal(state.phase, 'voting');
+  assert.throws(() => act(as('sam'), 'choosePush', { suspectId: 'ben' }), { code: 'wrong_phase' });
 
   const voting = now + 31_000;
   const votes = { auntsarah: 'noah', grandpa: 'noah', ben: 'noah', noah: 'lily', lily: 'maya' };
@@ -88,12 +92,12 @@ test('full round: roles -> answering -> voting -> review -> recap -> scoreboard'
   act(as('dana'), 'castVote', { answerIndex: 0, suspectId: 'maya' }, voting);
   assert.equal(state.phase, 'review', 'voting ends early once every vote and guess is in');
 
-  assert.equal(state.round.result.deltas.maya, 7);
+  assert.equal(state.round.result.deltas.maya, 5);
   assert.equal(state.players.maya.score, 0, 'scores are applied at reveal, not review');
   act(ADMIN, 'reveal');
   assert.equal(state.phase, 'recap');
-  assert.equal(state.players.maya.score, 7);
-  assert.equal(state.players.sam.score, -2);
+  assert.equal(state.players.maya.score, 5);
+  assert.equal(state.players.sam.score, -6); // 3 votes on Noah (+6), spotted, reversed
   assert.equal(state.roundNumber, 1);
   act(ADMIN, 'showScoreboard');
   act(ADMIN, 'nextRound');
@@ -194,6 +198,28 @@ test('a Framer who drops gets a 20 s grace period', () => {
   tick(ctx.state, t + 42_000, ctx.random);
   assert.equal(ctx.state.phase, 'setup');
   assert.match(ctx.state.notice.message, /Maya left/);
+});
+
+test('the admin can skip ahead once the Framer is done', () => {
+  const ctx = setupGame();
+  startMockupRound(ctx);
+  const { state, act } = ctx;
+  assert.throws(() => act(as('maya'), 'skipAhead'), { code: 'not_admin' });
+  assert.throws(() => act(ADMIN, 'skipAhead'), { code: 'not_ready' });
+  act(as('maya'), 'submitAnswer', { text: 'Spiders' });
+  act(ADMIN, 'skipAhead');
+  assert.equal(state.phase, 'voting');
+  act(ADMIN, 'skipAhead');
+  assert.equal(state.phase, 'review');
+
+  // From the briefing it shows the question straight away.
+  act(ADMIN, 'reveal');
+  act(ADMIN, 'showScoreboard');
+  act(ADMIN, 'nextRound');
+  act(ADMIN, 'startRound');
+  assert.equal(state.phase, 'roles');
+  act(ADMIN, 'skipAhead');
+  assert.equal(state.phase, 'answering');
 });
 
 test('pause, resume and add time', () => {

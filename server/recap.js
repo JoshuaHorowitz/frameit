@@ -31,11 +31,13 @@ export function buildRecap(result, names = {}, points = DEFAULT_POINTS) {
   );
   if (vandal) {
     intro.push(
-      `${name(vandal.id)} was the Snitch, secretly trying to get everyone to figure out it was ${framerNames}.`
+      vandal.pushId
+        ? `${name(vandal.id)} was the Saboteur, secretly trying to get everyone to pick ${name(vandal.pushId)}.`
+        : `${name(vandal.id)} was the Saboteur, but never chose anyone to push.`
     );
   }
   if (accomplice) {
-    intro.push(`${name(accomplice.id)} was the Accomplice, trying to take the heat off ${framerNames}.`);
+    intro.push(`${name(accomplice.id)} was the Doppelganger, trying to get everyone to pick them instead of ${framerNames}.`);
   }
   paragraphs.push(intro.join(' '));
 
@@ -48,18 +50,15 @@ export function buildRecap(result, names = {}, points = DEFAULT_POINTS) {
     if (a.voteCount === 0) {
       lines.push(`Nobody voted on ${framer}'s answer.`);
     } else {
-      for (const [suspectId, voters] of Object.entries(a.onOthers)) {
-        lines.push(
-          `${names_(voters)} fell for it and voted for ${name(suspectId)}, which gives ${framer} +${p.voteOnOther}${voters.length > 1 ? ' each' : ''}.`
-        );
-      }
       if (a.catchers.length > 0) {
-        lines.push(
-          `${names_(a.catchers)} caught ${framer}: +${p.catchFramer}${a.catchers.length > 1 ? ' each' : ''}.`
-        );
-      } else if (a.perfect) {
-        lines.push(`Nobody caught ${framer}, a Perfect Frame: +${p.perfectFrame}!`);
+        const each = a.catchers.length > 1 ? ' each' : '';
+        const framerPart = a.challenged ? '' : `, and ${framer} gets +${p.framerPerCatch} for ${a.catchers.length > 1 ? 'each of them' : 'that'}`;
+        lines.push(`${names_(a.catchers)} knew it was ${framer}: +${p.catchFramer}${each}${framerPart}.`);
       }
+      for (const [suspectId, voters] of Object.entries(a.onOthers)) {
+        lines.push(`${names_(voters)} guessed ${name(suspectId)}.`);
+      }
+      if (a.catchers.length === 0) lines.push(`Nobody recognized ${framer}!`);
     }
     if (a.challenged) lines.push(`The answer was challenged, so ${framer} gets no points for it.`);
     paragraphs.push(lines.join(' '));
@@ -69,12 +68,13 @@ export function buildRecap(result, names = {}, points = DEFAULT_POINTS) {
   if (vandal) {
     const lines = [];
     const vandalName = name(vandal.id);
-    if (vandal.catches > 0) {
+    if (vandal.pushId && vandal.pushVotes > 0) {
+      const pushName = name(vandal.pushId);
       lines.push(
-        `That earns ${vandalName} +${p.vandalPerCatch} for each player who caught ${two ? 'a Framer' : framerNames}.`
+        `${vandal.pushVotes === 1 ? '1 vote' : `${vandal.pushVotes} votes`} went to ${pushName}, which earns ${vandalName} +${p.saboteurPerVote} ${vandal.pushVotes === 1 ? 'for it' : 'each'}.`
       );
-    } else {
-      lines.push(`Nobody caught ${two ? 'a Framer' : framerNames}, so ${vandalName} earns nothing as the Snitch.`);
+    } else if (vandal.pushId) {
+      lines.push(`Nobody picked ${name(vandal.pushId)}, so ${vandalName} earns nothing as the Saboteur.`);
     }
     if (vandal.reversed) {
       const catchers = joinNames(vandal.caughtBy.map(name));
@@ -87,10 +87,10 @@ export function buildRecap(result, names = {}, points = DEFAULT_POINTS) {
           ? `${vandalName}'s +${vandal.earned} is reversed to ${signed(vandal.points)}`
           : `${vandalName} had nothing to lose`;
       lines.push(
-        `But ${catchers} figured out ${vandalName} was the Snitch! ${bonus ? `${bonus}, and ${reversal}.` : `${reversal}.`}`
+        `But ${catchers} figured out ${vandalName} was the Saboteur! ${bonus ? `${bonus}, and ${reversal}.` : `${reversal}.`}`
       );
     }
-    paragraphs.push(lines.join(' '));
+    if (lines.length) paragraphs.push(lines.join(' '));
   }
 
   if (accomplice) {

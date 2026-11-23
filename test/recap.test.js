@@ -19,6 +19,7 @@ test('mockup round recap matches the admin Recap screen', () => {
   const result = scoreRound({
     framers: [{ id: 'maya' }],
     vandalId: 'sam',
+    vandalPushId: 'noah',
     votes: {
       sarah: { 0: 'noah' }, grandpa: { 0: 'noah' }, ben: { 0: 'noah' },
       noah: { 0: 'lily' }, lily: { 0: 'maya' }, dana: { 0: 'maya' },
@@ -28,35 +29,33 @@ test('mockup round recap matches the admin Recap screen', () => {
   const { paragraphs, totals } = buildRecap(result, NAMES);
 
   assert.deepEqual(paragraphs, [
-    'Maya was the Framer this round. Sam was the Snitch, secretly trying to get everyone to figure out it was Maya.',
-    'Aunt Sarah, Grandpa and Ben fell for it and voted for Noah, which gives Maya +1 each. Noah fell for it and voted for Lily, which gives Maya +1. Lily and Dana caught Maya: +3 each.',
-    "That earns Sam +1 for each player who caught Maya. But Maya figured out Sam was the Snitch! Maya gets +3, and Sam's +2 is reversed to −2.",
+    'Maya was the Framer this round. Sam was the Saboteur, secretly trying to get everyone to pick Noah.',
+    'Lily and Dana knew it was Maya: +3 each, and Maya gets +1 for each of them. Aunt Sarah, Grandpa and Ben guessed Noah. Noah guessed Lily.',
+    "3 votes went to Noah, which earns Sam +2 each. But Maya figured out Sam was the Saboteur! Maya gets +3, and Sam's +6 is reversed to \u22126.",
   ]);
   assert.deepEqual(totals, [
-    { id: 'maya', name: 'Maya', delta: 7 },
+    { id: 'maya', name: 'Maya', delta: 5 },
     { id: 'dana', name: 'Dana', delta: 3 },
     { id: 'lily', name: 'Lily', delta: 3 },
-    { id: 'sam', name: 'Sam', delta: -2 },
+    { id: 'sam', name: 'Sam', delta: -6 },
   ]);
 });
 
-test('Perfect Frame and challenge sentences', () => {
-  const perfect = buildRecap(
-    scoreRound({ framers: [{ id: 'maya' }], votes: { ben: { 0: 'noah' } } }),
-    NAMES
-  );
-  assert.match(perfect.paragraphs[1], /Nobody caught Maya, a Perfect Frame: \+5!/);
-  assert.match(perfect.paragraphs[1], /Ben fell for it and voted for Noah, which gives Maya \+1\./);
+test('nobody recognized, and challenge sentences', () => {
+  const missed = buildRecap(scoreRound({ framers: [{ id: 'maya' }], votes: { ben: { 0: 'noah' } } }), NAMES);
+  assert.equal(missed.paragraphs[1], 'Ben guessed Noah. Nobody recognized Maya!');
+
+  const one = buildRecap(scoreRound({ framers: [{ id: 'maya' }], votes: { ben: { 0: 'maya' } } }), NAMES);
+  assert.equal(one.paragraphs[1], 'Ben knew it was Maya: +3, and Maya gets +1 for that.');
 
   const challenged = buildRecap(
     scoreRound({ framers: [{ id: 'maya' }], votes: { ben: { 0: 'maya' } }, challenged: [0] }),
     NAMES
   );
-  assert.match(challenged.paragraphs[1], /Ben caught Maya: \+3\./);
-  assert.match(challenged.paragraphs[1], /challenged, so Maya gets no points/);
+  assert.equal(challenged.paragraphs[1], 'Ben knew it was Maya: +3. The answer was challenged, so Maya gets no points for it.');
 });
 
-test('Two-Framer recap has a paragraph per answer and an Accomplice line', () => {
+test('Two-Framer recap has a paragraph per answer and a Doppelganger line', () => {
   const result = scoreRound({
     framers: [{ id: 'maya' }, { id: 'sam' }],
     accompliceId: 'dana',
@@ -64,7 +63,7 @@ test('Two-Framer recap has a paragraph per answer and an Accomplice line', () =>
   });
   const { paragraphs } = buildRecap(result, NAMES);
   assert.match(paragraphs[0], /^Maya was a Framer this round\. Sam was a Framer this round\./);
-  assert.match(paragraphs[0], /Dana was the Accomplice, trying to take the heat off Maya and Sam\./);
+  assert.match(paragraphs[0], /Dana was the Doppelganger, trying to get everyone to pick them instead of Maya and Sam\./);
   assert.match(paragraphs[1], /^On Maya's answer:/);
   assert.match(paragraphs[2], /^On Sam's answer:/);
   assert.equal(
