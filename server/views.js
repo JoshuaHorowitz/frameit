@@ -5,6 +5,8 @@
 import { PHASES as P } from '../shared/protocol.js';
 import { ROUND_PHASES, REVEALED_PHASES, roleOf, framerIndexOf, votesProgress } from './game.js';
 
+const TIMER_FOR_PHASE = { [P.ROLES]: 'pickTarget', [P.ANSWERING]: 'answering', [P.VOTING]: 'voting' };
+
 const publicPlayers = (state) =>
   Object.values(state.players)
     .map(({ id, name, score, connected, waiting }) => ({ id, name, score, connected, waiting }))
@@ -122,6 +124,7 @@ export function buildView(state, viewer) {
     roundNumber: round?.number ?? state.roundNumber,
     deadline: ROUND_PHASES.has(phase) ? round?.deadline ?? null : null,
     pausedRemaining: ROUND_PHASES.has(phase) ? round?.pausedRemaining ?? null : null,
+    timerTotal: ROUND_PHASES.has(phase) ? state.settings.timers[TIMER_FOR_PHASE[phase]] : null,
     players: publicPlayers(state),
     notice: state.notice,
   };

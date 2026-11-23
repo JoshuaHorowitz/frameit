@@ -5,6 +5,11 @@
   "description": "FrameIt: a phone-based party game. Answer truthfully, frame someone else, don't crack.",
   "type": "module",
   "scripts": {
+    "setup": "npm install react react-dom partysocket partyserver && npm install -D vite @vitejs/plugin-react vite-plugin-pwa wrangler concurrently",
+    "dev":"concurrently -k -n worker,app \"wrangler dev --port 8787\" \"vite --host\"",
+    "predev": "vite build",
+    "build": "vite build",
+    "deploy": "vite build && wrangler deploy",
     "test": "node --test"
   },
   "engines": {
