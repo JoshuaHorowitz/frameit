@@ -120,13 +120,13 @@ export function AdminSetup({ game, openSettings }) {
       <div className="stack" style={{ gap: 8 }}>
         <h2 className="label">Question</h2>
         <div className="list-row" style={{ padding: '12px 6px 12px 14px' }}>
-          <span style={{ flex: 1, fontWeight: 600, fontSize: 17, lineHeight: 1.35 }}>{setup.question}</span>
+          <span style={{ flex: 1, fontWeight: 600, fontSize: 17, lineHeight: 1.35 }}>{setup.question ?? 'No questions left. Add one in Settings.'}</span>
           <button className="icon-btn" aria-label="New question" onClick={() => send('rerollQuestion')}>↻</button>
         </div>
       </div>
       <div className="stack push-down">
         {voters < 1 && <p className="small center" style={{ color: 'var(--red-soft)' }}>Not enough players: nobody would be left to vote.</p>}
-        <button className="btn" disabled={voters < 1} onClick={() => send('startRound')}>Start round</button>
+        <button className="btn" disabled={voters < 1 || !setup.question} onClick={() => send('startRound')}>Start round</button>
         <div className="grid2">
           <button className="btn secondary small" onClick={openSettings}>Settings</button>
           <button className="btn secondary small" onClick={() => window.confirm('End the game and show final scores?') && send('endGame')}>End game</button>
@@ -391,8 +391,12 @@ export function AdminScoreboard({ game, final = false }) {
 
 export function AdminSettings({ game, back }) {
   const { view, send } = game;
-  const { settings, customQuestions } = view.admin;
+  const { settings, questions, removedBuiltIns } = view.admin;
   const [question, setQuestion] = useState('');
+  const [filter, setFilter] = useState('');
+  const [showAll, setShowAll] = useState(false);
+  const shown = questions.filter((q) => q.text.toLowerCase().includes(filter.trim().toLowerCase()));
+  const customCount = questions.filter((q) => q.custom).length;
   const num = (label, value, onSet, step = 1) => (
     <label className="spread" style={{ minHeight: 44 }}>
       <span>{label}</span>
@@ -430,11 +434,39 @@ export function AdminSettings({ game, back }) {
         <input className="input" placeholder="Add a question…" value={question} maxLength={200} onChange={(e) => setQuestion(e.target.value)} />
         <button className="btn" style={{ width: 'auto' }} type="submit">Add</button>
       </form>
-      {customQuestions.length > 0 && (
-        <details>
-          <summary>{customQuestions.length} custom questions</summary>
-          <ul className="small">{customQuestions.map((q) => <li key={q}>{q}</li>)}</ul>
-        </details>
+      <div className="spread">
+        <span className="small">
+          {questions.length} questions in the bank{customCount ? ` (${customCount} added by you)` : ''}
+        </span>
+        <button className="btn secondary small" style={{ width: 'auto' }} onClick={() => setShowAll((v) => !v)}>
+          {showAll ? 'Hide' : 'View & edit'}
+        </button>
+      </div>
+      {showAll && (
+        <div className="stack" style={{ gap: 6 }}>
+          <input className="input" style={{ fontSize: 16, padding: '10px 14px' }} placeholder="Search questions…" value={filter} onChange={(e) => setFilter(e.target.value)} />
+          {shown.map((q) => (
+            <div key={q.text} className="list-row" style={{ alignItems: 'flex-start', padding: '10px 4px 10px 14px', gap: 8 }}>
+              <span style={{ flex: 1, fontSize: 15, lineHeight: 1.4 }}>
+                {q.text}
+                {q.custom && <span className="chip gold" style={{ marginLeft: 8, padding: '2px 8px', fontSize: 11 }}>Added</span>}
+              </span>
+              <button
+                className="icon-btn"
+                aria-label={`Delete question: ${q.text}`}
+                onClick={() => (!q.custom || window.confirm('Delete this question? Questions you added can\'t be restored.')) && send('removeQuestion', { text: q.text })}
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          {shown.length === 0 && <p className="small">No questions match.</p>}
+          {removedBuiltIns > 0 && (
+            <button className="btn secondary small" onClick={() => send('restoreQuestions')}>
+              Restore {removedBuiltIns} deleted built-in question{removedBuiltIns === 1 ? '' : 's'}
+            </button>
+          )}
+        </div>
       )}
       <h1 className="h2">Timers (seconds)</h1>
       <div className="card" style={{ gap: 4 }}>
