@@ -120,21 +120,16 @@ export function useGame() {
   return { name, view, send, error, clearError: () => setError(null), status, clockOffset: clockOffset ?? 0, joinAs, leave };
 }
 
-// Time left on the current timer. Re-renders every animation frame while a
-// timer is running, so the progress bar drains smoothly instead of in
-// one-second steps. `ms` is exact; `seconds` is what the clock shows.
+// Time left on the current timer, for the clock digits. The progress bar is
+// animated separately by the browser (see TimerBar in ui.jsx), so this only
+// needs to tick a few times a second.
 export function useCountdown(view, clockOffset) {
   const [now, setNow] = useState(() => Date.now());
   const running = Boolean(view && view.deadline != null && view.pausedRemaining == null);
   useEffect(() => {
     if (!running) return undefined;
-    let frame;
-    const loop = () => {
-      setNow(Date.now());
-      frame = requestAnimationFrame(loop);
-    };
-    frame = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(frame);
+    const id = setInterval(() => setNow(Date.now()), 200);
+    return () => clearInterval(id);
   }, [running]);
   if (!view) return null;
   if (view.pausedRemaining != null) {

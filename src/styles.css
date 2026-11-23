@@ -67,7 +67,7 @@ button:disabled { opacity: 0.5; cursor: default; }
 .timer { font-family: var(--display); font-size: 28px; font-weight: 700; color: var(--gold); }
 .timer.paused { color: var(--muted); }
 .bar { height: 6px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
-.bar > div { height: 100%; background: var(--gold); will-change: width; }
+.bar > div { height: 100%; width: 100%; background: var(--gold); transform-origin: left center; will-change: transform; }
 
 h1, h2, h3, p { margin: 0; }
 .h1 { font-family: var(--display); font-size: 34px; line-height: 1.1; }
