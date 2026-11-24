@@ -18,11 +18,11 @@ function setup(names = ['Maya', 'Noah', 'Lily', 'Ben', 'Dana']) {
 }
 
 test('scoring: +3 per player who finds the Faker, Faker +2 per player fooled', () => {
-  const round = { fakerId: 'ben', voterIds: ['maya', 'noah', 'lily', 'dana'], votes: { maya: 'ben', noah: 'ben', lily: 'dana', dana: 'lily', ben: 'maya' } };
+  const round = { fakerId: 'ben', voterIds: ['maya', 'noah', 'lily', 'dana'], votes: { maya: 'ben', noah: 'ben', lily: 'dana', dana: 'lily' } };
   const { deltas, right, fooled } = scoreRound(round, undefined, ['maya', 'noah', 'lily', 'ben', 'dana']);
   assert.deepEqual(right, ['maya', 'noah']);
   assert.equal(fooled, 2);
-  assert.deepEqual(deltas, { maya: 3, noah: 3, lily: 0, ben: 4, dana: 0 }); // the Faker's own vote never scores
+  assert.deepEqual(deltas, { maya: 3, noah: 3, lily: 0, ben: 4, dana: 0 });
 });
 
 test('a full round: prompt hidden only from the Faker, then votes and reveal', () => {
@@ -48,8 +48,10 @@ test('a full round: prompt hidden only from the Faker, then votes and reveal', (
   act(as('maya'), 'castVote', { suspectId: 'ben' });
   act(as('noah'), 'castVote', { suspectId: 'ben' });
   act(as('lily'), 'castVote', { suspectId: 'dana' });
-  act(as('ben'), 'castVote', { suspectId: 'maya' });
-  assert.equal(buildView(state, as('ben')).round.votesIn, 4);
+  assert.throws(() => act(as('ben'), 'castVote', { suspectId: 'maya' }), { code: 'not_voter' }, 'the Faker does not vote');
+  const fakerView = buildView(state, as('ben')).round;
+  assert.deepEqual([fakerView.votesIn, fakerView.votesExpected, fakerView.myVote], [3, 4, undefined]);
+  assert.equal(buildView(state, as('maya')).round.myVote, 'ben');
   assert.throws(() => act(as('dana'), 'castVote', { suspectId: 'dana' }), { code: 'bad_suspect' });
 
   act(ADMIN, 'reveal');
@@ -59,7 +61,7 @@ test('a full round: prompt hidden only from the Faker, then votes and reveal', (
   const seen = buildView(state, as('lily')).round;
   assert.equal(seen.fakerId, 'ben');
   assert.equal(seen.prompt, 'The Beach');
-  assert.equal(seen.votes.ben, undefined, "the Faker's own vote is not shown");
+  assert.equal(seen.votes.ben, undefined, 'the Faker never voted');
 
   act(ADMIN, 'showScoreboard');
   act(ADMIN, 'nextRound');

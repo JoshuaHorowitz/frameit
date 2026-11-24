@@ -7,7 +7,7 @@
 // voting screen, then the reveal. All the hints happen in person.
 //
 // Scoring: +3 for each player who votes for the Faker; the Faker gets +2 for
-// every player who votes for someone else.
+// every player who votes for someone else. The Faker doesn't vote.
 
 import { GameError } from '../game.js';
 import { normalizeName } from '../../shared/protocol.js';
@@ -173,10 +173,9 @@ const playerActions = {
   castVote(state, actor, { suspectId }) {
     requirePhase(state, P.VOTING);
     const round = state.round;
-    const isFaker = round.fakerId === actor.playerId;
-    if (!round.voterIds.includes(actor.playerId) && !isFaker) fail('not_voter', 'You are not voting this round.');
+    // The Faker doesn't vote.
+    if (!round.voterIds.includes(actor.playerId)) fail('not_voter', 'You are not voting this round.');
     if (!state.players[suspectId] || suspectId === actor.playerId) fail('bad_suspect', 'Pick someone else.');
-    // The Faker votes too, so their screen looks like everyone else's; it doesn't score.
     round.votes[actor.playerId] = suspectId;
   },
 };
@@ -296,8 +295,8 @@ function roleOf(state, id) {
 
 function votesIn(round) {
   return {
-    votesIn: round.voterIds.filter((id) => round.votes[id]).length + (round.votes[round.fakerId] ? 1 : 0),
-    votesExpected: round.voterIds.length + 1,
+    votesIn: round.voterIds.filter((id) => round.votes[id]).length,
+    votesExpected: round.voterIds.length,
   };
 }
 
@@ -307,7 +306,7 @@ function revealed(state) {
     revealed: true,
     prompt: round.prompt,
     fakerId: round.fakerId,
-    votes: Object.fromEntries(Object.entries(round.votes).filter(([id]) => id !== round.fakerId)),
+    votes: round.votes,
     deltas: round.result?.deltas ?? {},
   };
 }
@@ -349,12 +348,11 @@ export function buildView(state, viewer) {
     r = revealed(state);
   } else if (phase === P.HINTS || phase === P.VOTING) {
     r = { firstId: round.firstId };
+    if (role === 'faker') r.fakerPoints = state.settings.points.fakerPerMiss;
     // The whole game: everyone sees the prompt except the Faker.
     if (role === 'player') r.prompt = round.prompt;
-    if (phase === P.VOTING && (role === 'player' || role === 'faker')) {
-      r.myVote = round.votes[me.id] ?? null;
-      Object.assign(r, votesIn(round));
-    }
+    if (phase === P.VOTING && role === 'player') r.myVote = round.votes[me.id] ?? null;
+    if (phase === P.VOTING && (role === 'player' || role === 'faker')) Object.assign(r, votesIn(round));
   }
   return { ...base, you: { id: me.id, name: me.name, score: me.score, role }, round: r };
 }
