@@ -2,7 +2,7 @@
   "name": "frameit",
   "version": "0.1.0",
   "private": true,
-  "description": "FrameIt: a phone-based party game. Answer honestly, guess who wrote it, don't crack.",
+  "description": "Game Night: phone-based party games (FrameIt, FOMO) for the whole family.",
   "type": "module",
   "scripts": {
     "setup": "npm install react react-dom partysocket partyserver && npm install -D vite @vitejs/plugin-react vite-plugin-pwa wrangler concurrently",

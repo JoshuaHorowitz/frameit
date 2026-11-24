@@ -35,7 +35,7 @@ export function AdminLobby({ game, openSettings }) {
   );
 }
 
-function PlayerAdminList({ game }) {
+export function PlayerAdminList({ game }) {
   const { view, send } = game;
   return (
     <div className="stack" style={{ gap: 6 }}>
@@ -372,7 +372,7 @@ export function AdminScoreboard({ game, final = false }) {
       </div>
       {final && (
         <div className="stack push-down">
-          <NewGameButton send={send} />
+          <GameOverButtons send={send} />
         </div>
       )}
       {!final && (
@@ -508,16 +508,26 @@ export function AdminSettings({ game, back }) {
   );
 }
 
-function NewGameButton({ send }) {
+// End of a game: same game again with fresh scores, or back to the game picker.
+export function GameOverButtons({ send }) {
+  return (
+    <>
+      <button className="btn" onClick={() => send('playAgain')}>Play again</button>
+      <button className="btn secondary" onClick={() => send('backToGames')}>Back to games</button>
+    </>
+  );
+}
+
+export function NewGameButton({ send }) {
   return (
     <button
       className="btn danger"
       onClick={() =>
-        window.confirm('Start a new game? This removes every player and score, and sends all phones back to the Join screen.') &&
+        window.confirm('Start fresh? This removes every player and ends the current game, and sends all phones back to the Join screen.') &&
         send('resetGame')
       }
     >
-      Start a new game
+      Start fresh (remove everyone)
     </button>
   );
 }

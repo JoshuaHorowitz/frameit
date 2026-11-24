@@ -15,13 +15,13 @@ export function JoinScreen({ onJoin, status, playerCount, message }) {
           <circle cx="24" cy="21" r="6" />
           <path d="M14 36c2-5 6-8 10-8s8 3 10 8" />
         </svg>
-        <h1 className="h1" style={{ fontSize: 52 }}>
-          <Logo />
+        <h1 className="h1">
+          <Logo which="hub" size={48} />
         </h1>
         <p className="body">
-          Answer honestly. Guess who.
+          Party games for the whole family.
           <br />
-          Don&apos;t crack.
+          FrameIt · FOMO
         </p>
       </div>
       <form
@@ -53,10 +53,10 @@ export function LobbyScreen({ game }) {
   const { view } = game;
   return (
     <Screen>
-      <TopBar game={game} left={<Logo />} />
+      <TopBar game={game} left={<Logo which="hub" />} />
       <div className="stack" style={{ marginTop: 12 }}>
         <h1 className="h1">You&apos;re in, {view.you.name}!</h1>
-        <p className="body">Waiting for the game to start. Here&apos;s who&apos;s here so far:</p>
+        <p className="body">Waiting for the admin to pick a game. Here&apos;s who&apos;s here so far:</p>
       </div>
       <div className="stack" style={{ gap: 6 }}>
         {view.players.map((p) => (

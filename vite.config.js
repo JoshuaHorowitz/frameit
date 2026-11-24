@@ -10,9 +10,9 @@ export default defineConfig({
       injectRegister: 'auto',
       includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
-        name: 'FrameIt',
-        short_name: 'FrameIt',
-        description: 'Answer honestly. Guess who. Don’t crack.',
+        name: 'Game Night',
+        short_name: 'Game Night',
+        description: 'Party games for the whole family: FrameIt, FOMO and more.',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',

@@ -17,13 +17,20 @@ export function Avatar({ id, name, big = false }) {
   );
 }
 
-export function Logo() {
+// The wordmark for whatever is on screen: the hub or the current game.
+const WORDMARKS = { hub: ['Game ', 'Night'], frameit: ['Frame', 'It'], fomo: ['FO', 'MO'] };
+
+export function Logo({ which = 'hub', size }) {
+  const [a, b] = WORDMARKS[which] ?? WORDMARKS.hub;
   return (
-    <span className="logo">
-      Frame<span>It</span>
+    <span className="logo" style={size ? { fontSize: size } : undefined}>
+      {a}
+      <span>{b}</span>
     </span>
   );
 }
+
+export const logoFor = (view) => (view?.hub?.gameId ?? 'hub');
 
 export function Screen({ theme, children }) {
   return <main className={`screen${theme ? ` theme-${theme}` : ''}`}>{children}</main>;
@@ -37,10 +44,10 @@ export function TopBar({ left, game, showBar = true }) {
   return (
     <>
       <div className="spread">
-        {left ?? <Logo />}
+        {left ?? <Logo which={logoFor(view)} />}
         {t ? (
           <span className={`timer${t.paused ? ' paused' : ''}`}>{t.paused ? `Paused ${fmt(t.seconds)}` : fmt(t.seconds)}</span>
-        ) : (
+        ) : view?.phase === 'hub' ? null : (
           <span className="chip">Round {view?.roundNumber || 1}</span>
         )}
       </div>

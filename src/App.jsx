@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useGame } from './useGame.js';
+import { HubAdminLobby } from './HubScreens.jsx';
+import { FomoPlayerApp, FomoAdminApp } from './FomoScreens.jsx';
 import { Waiting } from './ui.jsx';
 import {
   JoinScreen,
@@ -153,7 +155,7 @@ function PlayerApp({ game }) {
 export default function App() {
   const game = useGame();
   const { view, status, name, joinAs, leave } = game;
-  useWakeLock(Boolean(view && ROUND_PHASES.includes(view.phase)));
+  useWakeLock(Boolean(view && [...ROUND_PHASES, 'hints'].includes(view.phase)));
 
   let content;
   if (status === 'kicked') {
@@ -175,11 +177,13 @@ export default function App() {
   } else if (!name || !view) {
     content = name ? <Waiting game={game} title="Connecting…" body={<button className="btn secondary" style={{ marginTop: 20 }} onClick={leave}>Use a different name</button>} /> : <JoinScreen onJoin={joinAs} status={status} />;
   } else if (view.you?.isAdmin) {
-    content = <AdminApp game={game} />;
+    content =
+      view.phase === 'hub' ? <HubAdminLobby game={game} /> : view.hub?.gameId === 'fomo' ? <FomoAdminApp game={game} /> : <AdminApp game={game} />;
   } else if (!view.you) {
     content = <JoinScreen onJoin={joinAs} status="idle" />;
   } else {
-    content = <PlayerApp game={game} />;
+    content =
+      view.phase === 'hub' ? <LobbyScreen game={game} /> : view.hub?.gameId === 'fomo' ? <FomoPlayerApp game={game} /> : <PlayerApp game={game} />;
   }
 
   return (
