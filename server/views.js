@@ -38,7 +38,11 @@ function playerRoundView(state, id, role) {
   const view = {};
   const voting = phase === P.VOTING;
   const answeringOrLater = phase === P.ANSWERING || voting;
-  if (voting) Object.assign(view, votesProgress(round));
+  if (voting) {
+    Object.assign(view, votesProgress(round));
+    const { catchAll, catchMost, catchFew } = state.settings.points;
+    view.guessPoints = { all: catchAll, most: catchMost, few: catchFew };
+  }
 
   if (role === 'framer') {
     const f = round.framers[framerIndexOf(round, id)];

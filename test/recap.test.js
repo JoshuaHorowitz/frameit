@@ -30,15 +30,25 @@ test('mockup round recap matches the admin Recap screen', () => {
 
   assert.deepEqual(paragraphs, [
     'Maya was the Framer this round. Sam was the Saboteur, secretly trying to get everyone to pick Noah.',
-    'Lily and Dana knew it was Maya: +3 each, and Maya gets +1 for each of them. Aunt Sarah, Grandpa and Ben guessed Noah. Noah guessed Lily.',
+    'Lily and Dana knew it was Maya: +1 each, and Maya gets +1 for each of them. Aunt Sarah, Grandpa and Ben guessed Noah. Noah guessed Lily.',
     "3 votes went to Noah, which earns Sam +2 each. But Maya figured out Sam was the Saboteur! Maya gets +3, and Sam's +6 is reversed to \u22126.",
   ]);
   assert.deepEqual(totals, [
     { id: 'maya', name: 'Maya', delta: 5 },
-    { id: 'dana', name: 'Dana', delta: 3 },
-    { id: 'lily', name: 'Lily', delta: 3 },
+    { id: 'dana', name: 'Dana', delta: 1 },
+    { id: 'lily', name: 'Lily', delta: 1 },
     { id: 'sam', name: 'Sam', delta: -6 },
   ]);
+});
+
+test('the recap says when everyone or most got it', () => {
+  const all = buildRecap(scoreRound({ framers: [{ id: 'maya' }], voterIds: ['ben', 'lily'], votes: { ben: { 0: 'maya' }, lily: { 0: 'maya' } } }), NAMES);
+  assert.equal(all.paragraphs[1], 'Everyone got it! Ben and Lily knew it was Maya: +3 each, and Maya gets +1 for each of them.');
+  const most = buildRecap(
+    scoreRound({ framers: [{ id: 'maya' }], voterIds: ['ben', 'lily', 'dana'], votes: { ben: { 0: 'maya' }, lily: { 0: 'maya' }, dana: { 0: 'noah' } } }),
+    NAMES
+  );
+  assert.match(most.paragraphs[1], /^Most of you got it\. Ben and Lily knew it was Maya: \+2 each/);
 });
 
 test('nobody recognized, and challenge sentences', () => {

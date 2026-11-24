@@ -331,6 +331,10 @@ export function VoteScreen({ game }) {
         </div>
       ))}
       <div className="push-down stack">
+        <p className="small center" style={{ color: 'var(--text-soft)' }}>
+          Talk it out! A right guess is worth <b style={{ color: 'var(--gold)' }}>+{r.guessPoints?.all ?? 3}</b> if everyone gets it,
+          +{r.guessPoints?.most ?? 2} if most do, +{r.guessPoints?.few ?? 1} if only a few.
+        </p>
         <p className="small center">You can change your vote until the timer runs out.</p>
         <VotesIn round={r} />
       </div>

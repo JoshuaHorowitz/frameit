@@ -122,7 +122,7 @@ test('challenge zeroes the Framer before reveal and can be undone', () => {
   assert.equal(ctx.state.phase, 'review');
   ctx.act(ADMIN, 'challenge', { answerIndex: 0 });
   assert.equal(ctx.state.round.result.deltas.maya, 0);
-  assert.equal(ctx.state.round.result.deltas.ben, 3);
+  assert.equal(ctx.state.round.result.deltas.ben, 1); // 1 of 7 guessers got it
   ctx.act(ADMIN, 'unchallenge', { answerIndex: 0 });
   assert.deepEqual(ctx.state.round.challenged, []);
 });
@@ -165,7 +165,8 @@ test('a game saved with old settings is migrated to the current shape', async ()
   assert.equal(saved.settings.timers.answering, 45);
   assert.equal(saved.settings.timers.pickTarget, undefined);
   assert.equal(saved.settings.targetOptions, undefined);
-  assert.equal(saved.settings.points.catchFramer, 4);
+  assert.equal(saved.settings.points.catchFramer, undefined);
+  assert.equal(saved.settings.points.catchAll, 3);
   assert.equal(saved.settings.points.voteOnTarget, undefined);
 });
 
@@ -308,8 +309,8 @@ test('questions: delete built-in and added ones, restore built-ins, never run dr
 
 test('updateSettings only accepts known numeric settings', () => {
   const { state, act } = setupGame();
-  act(ADMIN, 'updateSettings', { settings: { points: { catchFramer: 4, bogus: 9 }, timers: { voting: 'x' } } });
-  assert.equal(state.settings.points.catchFramer, 4);
+  act(ADMIN, 'updateSettings', { settings: { points: { catchAll: 4, bogus: 9 }, timers: { voting: 'x' } } });
+  assert.equal(state.settings.points.catchAll, 4);
   assert.equal(state.settings.points.bogus, undefined);
   assert.equal(state.settings.timers.voting, 60);
 });

@@ -477,7 +477,10 @@ export function AdminSettings({ game, back }) {
       <h1 className="h2">Points</h1>
       <div className="card" style={{ gap: 4 }}>
         <span className="label">Guessers</span>
-        {num('Picking the Framer', P.catchFramer, (v) => set({ points: { catchFramer: v } }))}
+        <span className="small">Each correct guess is worth more when more of the room gets it together.</span>
+        {num('Correct, and everyone got it', P.catchAll, (v) => set({ points: { catchAll: v } }))}
+        {num('Correct, and most got it', P.catchMost, (v) => set({ points: { catchMost: v } }))}
+        {num('Correct, half or fewer got it', P.catchFew, (v) => set({ points: { catchFew: v } }))}
         <span className="label" style={{ marginTop: 8 }}>Framer</span>
         {num('Per person who picks them', P.framerPerCatch, (v) => set({ points: { framerPerCatch: v } }))}
         {num('Spotting the Saboteur', P.catchVandal, (v) => set({ points: { catchVandal: v } }))}
