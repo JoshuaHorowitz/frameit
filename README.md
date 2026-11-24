@@ -1,12 +1,18 @@
-# FrameIt
+# Game Night
 
-A phone-based party game for the family Chanukah party. Each round, a secret
-Framer answers a question honestly, and everyone else tries to work out who
-wrote it. How well do you really know each other?
+A phone-based party game hub for the family Chanukah party. Everyone joins
+once on their phone; the admin (joining as **Josh Horowitz**) picks a game,
+and every phone switches into it. After a game, play it again or pick another.
 
-- Players join on their phones (installable to the home screen as a PWA).
-- The admin runs the game from their own phone by joining as **Josh Horowitz**.
-- Optional secret roles: the Vandal, the Accomplice, and Two-Framer rounds.
+## Games
+
+- **FrameIt:** one secret Framer answers a question honestly; everyone else
+  works out who wrote it. Optional Saboteur, Doppelganger and Two-Framer rounds.
+- **FOMO:** everyone gets a prompt except one secret Faker. Go around the
+  circle giving one- or two-word hints out loud, then vote for the Faker.
+
+Each game keeps its own scores, which start at 0 every time it starts. Each
+game's settings and question/prompt bank are remembered between plays.
 
 ## Stack
 
@@ -54,13 +60,17 @@ see in every phase.
 ## Layout
 
 ```
-shared/     protocol.js (phases, settings, points), questions.js
-server/     game.js (state machine), views.js (per-phone snapshots),
-            scoring.js, recap.js, GameRoom.js (Durable Object), index.js (Worker)
-src/        React app: useGame.js, App.jsx, PlayerScreens.jsx, AdminScreens.jsx
+shared/     protocol.js, questions.js (FrameIt), fomoPrompts.js (FOMO)
+server/     hub.js (players, game picker), GameRoom.js (Durable Object), index.js (Worker)
+            games/frameit.js + game.js, views.js, scoring.js, recap.js (FrameIt)
+            games/fomo.js (FOMO)
+src/        React app: useGame.js, App.jsx, HubScreens.jsx,
+            PlayerScreens.jsx + AdminScreens.jsx (FrameIt), FomoScreens.jsx
 test/       unit tests
 ```
 
-The game engine (`server/game.js`) has no Cloudflare dependencies; `GameRoom.js`
-is a thin adapter that stores state, schedules alarms for timers and sends each
-phone its private view.
+The hub and games have no Cloudflare dependencies; `GameRoom.js` is a thin
+adapter that stores state, schedules alarms for timers and sends each phone its
+private view. To add a game, write a module with the same functions as
+`server/games/fomo.js`, register it in `GAMES` in `server/hub.js`, and add its
+screens to `src/App.jsx`.

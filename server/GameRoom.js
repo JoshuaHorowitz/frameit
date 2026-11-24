@@ -3,8 +3,8 @@
 // schedules alarms for the timers, and sends each phone its private view.
 
 import { Server } from 'partyserver';
-import { createState, migrateState, join, applyAction, tick, nextAlarm, setConnected, GameError } from './game.js';
-import { buildView } from './views.js';
+import { GameError } from './game.js';
+import { createHub, migrateHub, join, applyAction, tick, nextAlarm, setConnected, buildView } from './hub.js';
 
 const STORAGE_KEY = 'state';
 
@@ -19,7 +19,7 @@ export class GameRoom extends Server {
   async loadState() {
     if (!this.game) {
       const saved = await this.ctx.storage.get(STORAGE_KEY);
-      this.game = saved ? migrateState(saved) : createState();
+      this.game = saved ? migrateHub(saved) : createHub();
     }
     return this.game;
   }
