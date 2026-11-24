@@ -52,7 +52,13 @@ export function scoreRound(round, points = DEFAULT_POINTS, playerIds = []) {
       (onOthers[b.suspectId] ??= []).push(b.voterId);
     }
 
-    for (const voterId of catchers) add(voterId, p.catchFramer);
+    // Guessers score more the more of them got it right together. "Everyone"
+    // means every guesser in the round; someone who didn't vote counts as wrong.
+    const guessers = round.voterIds?.length || new Set(cast.map((b) => b.voterId)).size;
+    const tier =
+      catchers.length === 0 ? null : catchers.length >= guessers ? 'all' : catchers.length * 2 > guessers ? 'most' : 'few';
+    const perCatch = tier === 'all' ? p.catchAll : tier === 'most' ? p.catchMost : p.catchFew;
+    for (const voterId of catchers) add(voterId, perCatch);
 
     // The Framer answers honestly and scores when the room recognizes them.
     const isChallenged = challenged.has(answerIndex);
@@ -65,6 +71,9 @@ export function scoreRound(round, points = DEFAULT_POINTS, playerIds = []) {
       voteCount: cast.length,
       onOthers,
       catchers,
+      guessers,
+      tier,
+      perCatch: tier ? perCatch : 0,
       challenged: isChallenged,
       framerPoints,
     };

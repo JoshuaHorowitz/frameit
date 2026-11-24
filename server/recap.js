@@ -53,7 +53,11 @@ export function buildRecap(result, names = {}, points = DEFAULT_POINTS) {
       if (a.catchers.length > 0) {
         const each = a.catchers.length > 1 ? ' each' : '';
         const framerPart = a.challenged ? '' : `, and ${framer} gets +${p.framerPerCatch} for ${a.catchers.length > 1 ? 'each of them' : 'that'}`;
-        lines.push(`${names_(a.catchers)} knew it was ${framer}: +${p.catchFramer}${each}${framerPart}.`);
+        const together =
+          a.tier === 'all'
+            ? a.catchers.length > 1 ? 'Everyone got it! ' : ''
+            : a.tier === 'most' ? 'Most of you got it. ' : '';
+        lines.push(`${together}${names_(a.catchers)} knew it was ${framer}: +${a.perCatch}${each}${framerPart}.`);
       }
       for (const [suspectId, voters] of Object.entries(a.onOthers)) {
         lines.push(`${names_(voters)} guessed ${name(suspectId)}.`);

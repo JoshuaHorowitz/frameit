@@ -29,7 +29,11 @@ export const PHASES = Object.freeze({
 // vandalPushId, catchVandal, guessVandal. Likewise "the Doppelganger" is
 // `accomplice` in code (accompliceId, accompliceVote). Only the words on screen changed.
 export const DEFAULT_POINTS = Object.freeze({
-  catchFramer: 3, // each voter who picks the Framer
+  // Each guesser who picks the Framer scores more when the room gets it
+  // together, so it pays to talk it out and convince each other:
+  catchAll: 3, // ...when every guesser picked the Framer
+  catchMost: 2, // ...when more than half did
+  catchFew: 1, // ...when half or fewer did
   framerPerCatch: 1, // Framer, per person who picks them ("the room knows you")
   saboteurPerVote: 2, // Saboteur, per vote on the person they're pushing
   catchVandal: 3, // Framer bonus for spotting the Saboteur
