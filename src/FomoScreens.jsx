@@ -43,15 +43,36 @@ function FakerScreen({ game }) {
         <h1 className="h1" style={{ fontSize: 40, color: '#fff' }}>You&apos;re the Faker!</h1>
       </div>
       <p className="body center">
-        You <b style={{ color: 'var(--text)' }}>don&apos;t know the prompt</b>. Listen to everyone&apos;s hints, work out what it is, and give
-        a hint that blends in.
+        Everyone was given the same prompt <b style={{ color: 'var(--text)' }}>except you</b>. Figure out what the prompt is so you
+        don&apos;t make yourself too obvious when it&apos;s your turn.
+      </p>
+      <p className="body center">
+        For every player that doesn&apos;t choose you during the voting, you get{' '}
+        <b style={{ color: 'var(--gold)' }}>+{view.round.fakerPoints ?? 2} points</b>!
       </p>
       <FirstHint view={view} />
     </Screen>
   );
 }
 
-// The Faker sees exactly the same voting screen as everyone else.
+// The Faker doesn't vote; they watch the votes come in.
+function FakerVotingScreen({ game }) {
+  const { view } = game;
+  const r = view.round;
+  return (
+    <Screen theme="vandal">
+      <TopBar game={game} left={<span className="chip">Vote</span>} />
+      <div className="stack center" style={{ marginTop: '18vh' }}>
+        <h1 className="h1">Everyone&apos;s voting…</h1>
+        <p className="body">
+          You don&apos;t vote this round. Keep a straight face: +{r.fakerPoints ?? 2} for every player who doesn&apos;t choose you!
+        </p>
+      </div>
+      <p className="small center push-down">{r.votesIn} of {r.votesExpected} votes in</p>
+    </Screen>
+  );
+}
+
 function VoteScreen({ game }) {
   const { view, send } = game;
   const r = view.round;
@@ -116,7 +137,8 @@ export function FomoPlayerApp({ game }) {
       if (role === 'player') return <PromptScreen game={game} />;
       return <Waiting game={game} title="You'll join next round!" body="Listen in and see if you can spot the Faker." />;
     case 'voting':
-      if (role === 'faker' || role === 'player') return <VoteScreen game={game} />;
+      if (role === 'faker') return <FakerVotingScreen game={game} />;
+      if (role === 'player') return <VoteScreen game={game} />;
       return <Waiting game={game} title="You'll join next round!" />;
     case 'reveal':
       return view.round?.revealed ? <RevealScreen game={game} /> : <Waiting game={game} title="Revealing…" />;
