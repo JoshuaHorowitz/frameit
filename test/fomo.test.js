@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createState, join, applyAction, buildView, scoreRound } from '../server/games/fomo.js';
+import { createState, join, applyAction, buildView, scoreRound, promptBank, saveConfig } from '../server/games/fomo.js';
+import { FOMO_PROMPTS } from '../shared/fomoPrompts.js';
 
 const ADMIN = { isAdmin: true, playerId: null };
 const as = (id) => ({ isAdmin: false, playerId: id });
@@ -81,12 +82,34 @@ test('a random Faker stays hidden from the admin; random prompts can be rerolled
   assert.equal(buildView(state, ADMIN).admin.live.knownFakerId, null);
 });
 
-test('FOMO needs at least 3 players; latecomers wait for the next round', () => {
+test('FOMO starts with any number of players; latecomers wait for the next round', () => {
+  const nobody = setup([]);
+  assert.throws(() => nobody.act(ADMIN, 'startRound'), { code: 'not_enough_players' });
   const small = setup(['Maya', 'Noah']);
-  assert.throws(() => small.act(ADMIN, 'startRound'), { code: 'not_enough_players' });
+  small.act(ADMIN, 'startRound');
+  assert.equal(small.state.phase, 'hints');
   const { state, act } = setup();
   act(ADMIN, 'startRound');
   join(state, 'Eli');
   assert.equal(buildView(state, as('eli')).you.role, 'waiting');
   assert.equal(buildView(state, as('eli')).round.prompt, undefined);
+});
+
+test('the prompt bank: add, delete and restore, and it is saved with the config', () => {
+  const { state, act } = setup();
+  act(ADMIN, 'addPrompt', { text: "Grandma's kitchen" });
+  assert.equal(promptBank(state).length, FOMO_PROMPTS.length + 1);
+  act(ADMIN, 'removePrompt', { text: 'Pizza' });
+  act(ADMIN, 'removePrompt', { text: "Grandma's kitchen" });
+  assert.equal(promptBank(state).length, FOMO_PROMPTS.length - 1);
+  assert.ok(!buildView(state, ADMIN).admin.setup.prompts.includes('Pizza'));
+  assert.equal(buildView(state, ADMIN).admin.removedBuiltIns, 1);
+  act(ADMIN, 'addPrompt', { text: 'Fireflies' });
+  const again = createState(saveConfig(state));
+  assert.equal(promptBank(again).some((p) => p.text === 'Fireflies'), true);
+  assert.equal(promptBank(again).some((p) => p.text === 'Pizza'), false);
+  act(ADMIN, 'restorePrompts');
+  assert.equal(promptBank(state).some((p) => p.text === 'Pizza'), true);
+  act(ADMIN, 'setPrompt', { text: 'Fireflies' });
+  assert.equal(state.round.customPrompt, false, 'a prompt from the list is not marked as typed');
 });

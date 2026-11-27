@@ -77,9 +77,27 @@ test('kick and reset work from the hub', () => {
   assert.ok(hub.configs.frameit, 'FrameIt settings are kept');
 });
 
-test('a game needs enough players', () => {
-  const { act } = hubWith(['Maya', 'Noah']);
-  assert.throws(() => act(ADMIN, 'startHubGame', { gameId: 'fomo' }), { code: 'not_enough_players' });
+test('a game can start with any number of players, even none', () => {
+  const { hub, act } = hubWith([]);
+  act(ADMIN, 'startHubGame', { gameId: 'fomo' });
+  assert.equal(hub.phase, 'playing');
+});
+
+test('game settings can be changed from the lobby, before anyone joins', () => {
+  const { hub, act } = hubWith([]);
+  act(ADMIN, 'configureGame', { gameId: 'frameit', action: { type: 'updateSettings', settings: { timers: { voting: 45 } } } });
+  act(ADMIN, 'configureGame', { gameId: 'frameit', action: { type: 'addQuestion', text: 'Who would win a pillow fight?' } });
+  act(ADMIN, 'configureGame', { gameId: 'fomo', action: { type: 'removePrompt', text: 'Pizza' } });
+  assert.throws(() => act(ADMIN, 'configureGame', { gameId: 'fomo', action: { type: 'startRound' } }), { code: 'unknown_action' });
+  assert.throws(() => act(as('maya'), 'configureGame', { gameId: 'fomo', action: { type: 'updateSettings' } }), { code: 'not_admin' });
+  const settings = buildView(hub, ADMIN).admin.gameSettings;
+  assert.equal(settings.frameit.settings.timers.voting, 45);
+  assert.ok(settings.frameit.questions.some((q) => q.text === 'Who would win a pillow fight?'));
+  assert.ok(!settings.fomo.prompts.some((p) => p.text === 'Pizza'));
+  act(ADMIN, 'startHubGame', { gameId: 'frameit' });
+  assert.equal(hub.game.settings.timers.voting, 45, 'the game starts with the lobby settings');
+  act(ADMIN, 'configureGame', { gameId: 'frameit', action: { type: 'updateSettings', settings: { timers: { voting: 50 } } } });
+  assert.equal(hub.game.settings.timers.voting, 50, 'and lobby-style changes reach a running game');
 });
 
 test('a save from before the hub becomes a hub lobby, keeping players and FrameIt settings', () => {

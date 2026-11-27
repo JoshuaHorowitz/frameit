@@ -127,15 +127,30 @@ test('challenge zeroes the Framer before reveal and can be undone', () => {
   assert.deepEqual(ctx.state.round.challenged, []);
 });
 
-test('a setup with nobody left to vote is refused', () => {
+test('any number of players can start a round; roles that cannot be filled are refused', () => {
   const state = createState();
   join(state, 'Maya');
   join(state, 'Sam');
   const act = (type, payload = {}) => applyAction(state, ADMIN, { type, ...payload }, 0, seeded());
   act('startGame');
-  act('configureRound', { addOns: { vandal: true } });
-  assert.throws(() => act('startRound'), { code: 'no_voters' });
-  assert.equal(state.phase, 'setup');
+  act('configureRound', { addOns: { vandal: true, accomplice: true } });
+  assert.throws(() => act('startRound'), { code: 'not_enough_players' }, 'three roles, two players');
+  act('configureRound', { addOns: { accomplice: false } });
+  act('startRound'); // Framer + Saboteur, nobody left to vote: allowed
+  assert.equal(state.phase, 'roles');
+  assert.deepEqual(state.round.voterIds, []);
+});
+
+test('the admin can choose the question for a round, from the bank or typed', () => {
+  const { state, act } = setupGame();
+  act(ADMIN, 'setQuestion', { text: "What's your strangest habit?" });
+  assert.equal(state.round.question, "What's your strangest habit?");
+  assert.equal(state.round.customQuestion, false);
+  act(ADMIN, 'setQuestion', { text: '  Who in this room would survive a zombie movie?  ' });
+  assert.equal(state.round.question, 'Who in this room would survive a zombie movie?');
+  assert.equal(state.round.customQuestion, true);
+  assert.equal(state.customQuestions.length, 0, 'a typed question is for this round only');
+  assert.throws(() => act(ADMIN, 'setQuestion', { text: 'x' }), { code: 'bad_question' });
 });
 
 test('the roles briefing ends when the Framer is ready, or when its timer runs out', () => {

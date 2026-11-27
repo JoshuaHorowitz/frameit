@@ -1,6 +1,21 @@
 import { useState } from 'react';
 import { Screen, Logo } from './ui.jsx';
-import { PlayerAdminList, NewGameButton } from './AdminScreens.jsx';
+import { PlayerAdminList, NewGameButton, AdminSettings as FrameItSettings } from './AdminScreens.jsx';
+import { FomoSettings } from './FomoScreens.jsx';
+
+const SETTINGS_SCREENS = { frameit: FrameItSettings, fomo: FomoSettings };
+
+// Settings edited from the lobby are saved for the next game of that kind.
+function lobbySettingsGame(game, gameId) {
+  return {
+    ...game,
+    view: { ...game.view, admin: game.view.admin.gameSettings[gameId] },
+    send: (type, payload = {}) =>
+      type === 'kick' || type === 'resetGame'
+        ? game.send(type, payload)
+        : game.send('configureGame', { gameId, action: { type, ...payload } }),
+  };
+}
 
 // The admin's Game Night lobby: who's here, which game to play, and Start.
 export function HubAdminLobby({ game }) {
@@ -8,7 +23,11 @@ export function HubAdminLobby({ game }) {
   const games = view.hub.games;
   const [choice, setChoice] = useState(games[0]?.id);
   const picked = games.find((g) => g.id === choice);
-  const enough = picked && view.players.length >= picked.minPlayers;
+  const [settingsFor, setSettingsFor] = useState(null);
+  const SettingsScreen = settingsFor && SETTINGS_SCREENS[settingsFor];
+  if (SettingsScreen && view.admin?.gameSettings?.[settingsFor]) {
+    return <SettingsScreen game={lobbySettingsGame(game, settingsFor)} back={() => setSettingsFor(null)} />;
+  }
   return (
     <Screen>
       <div className="spread">
@@ -34,14 +53,19 @@ export function HubAdminLobby({ game }) {
         ))}
       </div>
       <div className="stack" style={{ gap: 6 }}>
-        <h2 className="label">{view.players.length} players here</h2>
+        <h2 className="label">{view.players.length} {view.players.length === 1 ? 'player' : 'players'} here</h2>
         <PlayerAdminList game={game} />
       </div>
       <div className="stack push-down">
-        {picked && !enough && <p className="small center">{picked.name} needs at least {picked.minPlayers} players.</p>}
-        <button className="btn" disabled={!enough} onClick={() => send('startHubGame', { gameId: choice })}>
+        {picked && view.players.length < picked.bestWith && (
+          <p className="small center">{picked.name} is best with {picked.bestWith} or more players.</p>
+        )}
+        <button className="btn" disabled={!picked} onClick={() => send('startHubGame', { gameId: choice })}>
           Start {picked?.name}
         </button>
+        {picked && SETTINGS_SCREENS[picked.id] && (
+          <button className="btn secondary" onClick={() => setSettingsFor(picked.id)}>{picked.name} settings</button>
+        )}
         <NewGameButton send={send} />
       </div>
     </Screen>

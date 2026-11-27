@@ -246,13 +246,14 @@ function startRound(state, now, random) {
       continue;
     }
     const pool = connectedActive.filter((id) => !taken.has(id));
-    if (pool.length === 0) fail('not_enough_players', 'Not enough players for these roles.');
+    if (pool.length === 0) fail('not_enough_players', 'Not enough players to fill these roles.');
     slot.id = pickOne(pool, random);
     taken.add(slot.id);
   }
 
+  // No minimum number of voters: a round with nobody left to vote still runs
+  // (handy for testing); it just ends when its timer does.
   const voterIds = active.filter((id) => !taken.has(id));
-  if (voterIds.length === 0) fail('no_voters', 'This setup leaves nobody to vote.');
 
   const framerSlots = slots.filter((s) => s.kind === 'framer');
   round.framers = framerSlots.map((s) => ({ id: s.id, ready: false, draft: '', answer: '' }));
@@ -429,6 +430,18 @@ const adminActions = {
   rerollQuestion(state, actor, _payload, now, random) {
     requirePhase(state, P.SETUP);
     state.round.question = drawQuestion(state, random);
+    state.round.customQuestion = false;
+  },
+
+  // Choose the question for the next round: one from the bank, or one typed
+  // just for this round (it isn't added to the bank).
+  setQuestion(state, actor, { text }) {
+    requirePhase(state, P.SETUP);
+    const question = cleanText(text, MAX_QUESTION);
+    if (question.length < 3) fail('bad_question', 'That question is too short.');
+    state.round.question = question;
+    state.round.customQuestion = !questionBank(state).some((q) => q.text === question);
+    if (!state.usedQuestions.includes(question)) state.usedQuestions.push(question);
   },
 
   startRound(state, actor, _payload, now, random) {

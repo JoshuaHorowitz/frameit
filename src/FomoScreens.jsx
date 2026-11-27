@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Screen, TopBar, PlayerGrid, Waiting, Avatar, nameOf, signed, deltaClass } from './ui.jsx';
 import { StandingsScreen } from './PlayerScreens.jsx';
 import { GameOverButtons } from './AdminScreens.jsx';
+import { BankEditor, PromptPicker } from './BankEditor.jsx';
 
 // ============ Players ============
 
@@ -167,55 +168,20 @@ function Header({ title }) {
 function AdminSetup({ game, openSettings }) {
   const { view, send } = game;
   const setup = view.admin.setup;
-  const [text, setText] = useState('');
   const active = view.players.filter((p) => !p.waiting);
-  const q = text.trim().toLowerCase();
-  const matches = q ? setup.prompts.filter((p) => p.toLowerCase().includes(q)).slice(0, 6) : [];
-  const exact = setup.prompts.some((p) => p.toLowerCase() === q);
-  const use = (prompt) => {
-    send('setPrompt', { text: prompt });
-    setText('');
-  };
   return (
     <Screen>
       <Header title={`FOMO · Round ${view.roundNumber}`} />
       {view.notice && <p className="warn" style={{ background: 'var(--surface-2)' }}>{view.notice.message}</p>}
-      <div className="stack" style={{ gap: 8 }}>
-        <h2 className="label">Prompt</h2>
-        <div className="list-row" style={{ padding: '12px 6px 12px 14px' }}>
-          <span style={{ flex: 1, fontWeight: 700, fontSize: 20 }}>
-            {setup.prompt}
-            {setup.customPrompt && <span className="chip gold" style={{ marginLeft: 8, padding: '2px 8px', fontSize: 11 }}>Typed</span>}
-          </span>
-          <button className="icon-btn" aria-label="Random prompt" onClick={() => send('setPrompt', { random: true })}>🎲</button>
-        </div>
-        <form
-          className="row"
-          onSubmit={(e) => {
-            e.preventDefault();
-            if (text.trim()) use(matches[0] && exact ? matches[0] : text);
-          }}
-        >
-          <input
-            className="input"
-            style={{ fontSize: 16, padding: '12px 14px' }}
-            placeholder="Search or type your own prompt…"
-            value={text}
-            maxLength={80}
-            onChange={(e) => setText(e.target.value)}
-          />
-        </form>
-        {matches.map((p) => (
-          <button key={p} className="list-row" style={{ border: 0, textAlign: 'left', minHeight: 44 }} onClick={() => use(p)}>
-            {p}
-          </button>
-        ))}
-        {q && !exact && (
-          <button className="btn secondary small" onClick={() => use(text)}>
-            Use “{text.trim()}”
-          </button>
-        )}
-      </div>
+      <PromptPicker
+        label="Prompt"
+        current={setup.prompt}
+        typed={setup.customPrompt}
+        items={setup.prompts}
+        emptyText="No prompts left. Add one in Settings."
+        onPick={(text) => send('setPrompt', { text })}
+        onRandom={() => send('setPrompt', { random: true })}
+      />
       <div className="stack" style={{ gap: 8 }}>
         <h2 className="label">Faker</h2>
         <label className="list-row" style={{ paddingRight: 8 }}>
@@ -234,8 +200,8 @@ function AdminSetup({ game, openSettings }) {
         <p className="small">A random Faker stays hidden from you so you can play along.</p>
       </div>
       <div className="stack push-down">
-        {active.length < 3 && <p className="small center" style={{ color: 'var(--red-soft)' }}>FOMO needs at least 3 players.</p>}
-        <button className="btn" disabled={active.length < 3} onClick={() => send('startRound')}>Start round</button>
+        {active.length < 3 && <p className="small center">FOMO is best with 3 or more players{active.length === 0 ? ', and someone has to join first' : ''}.</p>}
+        <button className="btn" disabled={active.length < 1 || !setup.prompt} onClick={() => send('startRound')}>Start round</button>
         <div className="grid2">
           <button className="btn secondary small" onClick={openSettings}>Settings</button>
           <button className="btn secondary small" onClick={() => window.confirm('End FOMO and show final scores?') && send('endGame')}>End game</button>
@@ -346,7 +312,7 @@ function AdminScores({ game, final = false }) {
   );
 }
 
-function AdminSettings({ game, back }) {
+export function FomoSettings({ game, back }) {
   const { view, send } = game;
   const P = view.admin.settings.points;
   const num = (label, value, key) => (
@@ -371,6 +337,15 @@ function AdminSettings({ game, back }) {
         <button className="btn secondary small" style={{ width: 'auto' }} onClick={back}>‹ Back</button>
         <AdminChip />
       </div>
+      <h1 className="h2">Prompts</h1>
+      <BankEditor
+        noun="prompt"
+        items={view.admin.prompts}
+        removedBuiltIns={view.admin.removedBuiltIns}
+        onAdd={(text) => send('addPrompt', { text })}
+        onRemove={(text) => send('removePrompt', { text })}
+        onRestore={() => send('restorePrompts')}
+      />
       <h1 className="h2">FOMO points</h1>
       <div className="card" style={{ gap: 4 }}>
         {num('Each player who finds the Faker', P.catchFaker, 'catchFaker')}
@@ -383,7 +358,7 @@ function AdminSettings({ game, back }) {
 export function FomoAdminApp({ game }) {
   const { view } = game;
   const [settings, setSettings] = useState(false);
-  if (settings) return <AdminSettings game={game} back={() => setSettings(false)} />;
+  if (settings) return <FomoSettings game={game} back={() => setSettings(false)} />;
   switch (view.phase) {
     case 'setup':
       return <AdminSetup game={game} openSettings={() => setSettings(true)} />;
