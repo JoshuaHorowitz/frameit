@@ -88,7 +88,7 @@ function adminView(state) {
   if (!round) return view;
 
   if (phase === P.SETUP) {
-    view.setup = { question: round.question, ...round.config };
+    view.setup = { question: round.question, customQuestion: Boolean(round.customQuestion), ...round.config };
     return view;
   }
   if (ROUND_PHASES.has(phase)) {

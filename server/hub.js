@@ -21,17 +21,38 @@ export const GAMES = {
     module: frameit,
     name: 'FrameIt',
     tagline: 'One person answers honestly. How well do you know them?',
-    minPlayers: 3,
+    bestWith: 3, // a suggestion only; any number can start
   },
   fomo: {
     module: fomo,
     name: 'FOMO',
     tagline: 'Everyone knows the prompt except the Faker. Give hints, find the Faker.',
-    minPlayers: 3,
+    bestWith: 3,
   },
 };
 
 const MAX_NAME = 24;
+const CONFIG_ACTIONS = new Set([
+  'updateSettings',
+  'addQuestion',
+  'removeQuestion',
+  'restoreQuestions',
+  'addPrompt',
+  'removePrompt',
+  'restorePrompts',
+]);
+
+// What each game's Settings screen needs, built from its saved config, so the
+// admin can edit settings from the lobby with no game running.
+function gameSettingsViews(hub) {
+  const out = {};
+  for (const [id, entry] of Object.entries(GAMES)) {
+    const source =
+      hub.game && hub.gameId === id ? hub.game : entry.module.createState(hub.configs[id] ?? {}, () => 0, 0);
+    out[id] = entry.module.buildView(source, { isAdmin: true, playerId: null }).admin;
+  }
+  return out;
+}
 const fail = (code, message) => {
   throw new GameError(code, message);
 };
@@ -100,8 +121,7 @@ export function tick(hub, now, random = Math.random) {
 
 function startGame(hub, gameId, now, random) {
   const entry = GAMES[gameId] ?? fail('bad_game', 'Unknown game.');
-  const players = Object.values(hub.players);
-  if (players.length < entry.minPlayers) fail('not_enough_players', `${entry.name} needs at least ${entry.minPlayers} players.`);
+  const players = Object.values(hub.players); // any number, even none: handy for testing
   const game = entry.module.createState(hub.configs[gameId] ?? {}, random, now);
   for (const p of players) {
     entry.module.join(game, p.name);
@@ -141,6 +161,18 @@ const hubActions = {
     leaveGame(hub);
   },
 
+  // Change a game's settings or question/prompt bank from the lobby, whether
+  // or not that game is running. Only settings-type actions are allowed.
+  configureGame(hub, { gameId, action }, now, random) {
+    const entry = GAMES[gameId] ?? fail('bad_game', 'Unknown game.');
+    if (!CONFIG_ACTIONS.has(action?.type)) fail('unknown_action', 'That is not a settings change.');
+    const admin = { isAdmin: true, playerId: null };
+    if (hub.game && hub.gameId === gameId) return entry.module.applyAction(hub.game, admin, action, now, random);
+    const scratch = entry.module.createState(hub.configs[gameId] ?? {}, random, now);
+    entry.module.applyAction(scratch, admin, action, now, random);
+    hub.configs[gameId] = entry.module.saveConfig(scratch);
+  },
+
   kick(hub, { playerId }, now, random) {
     if (!hub.players[playerId]) fail('bad_player', 'Unknown player.');
     if (hub.game) active(hub).removePlayer(hub.game, playerId, now, random);
@@ -176,7 +208,7 @@ export function buildView(hub, viewer) {
   const info = {
     phase: hub.phase,
     gameId: hub.gameId,
-    games: Object.entries(GAMES).map(([id, g]) => ({ id, name: g.name, tagline: g.tagline, minPlayers: g.minPlayers })),
+    games: Object.entries(GAMES).map(([id, g]) => ({ id, name: g.name, tagline: g.tagline, bestWith: g.bestWith })),
   };
   if (hub.game) {
     return { ...active(hub).buildView(hub.game, viewer), hub: info };
@@ -185,7 +217,7 @@ export function buildView(hub, viewer) {
     .map(({ id, name, connected }) => ({ id, name, connected, score: 0, waiting: false }))
     .sort((a, b) => a.name.localeCompare(b.name));
   const base = { phase: 'hub', roundNumber: 0, deadline: null, pausedRemaining: null, timerTotal: null, players, notice: hub.notice, hub: info };
-  if (viewer?.isAdmin) return { ...base, you: { isAdmin: true }, admin: {} };
+  if (viewer?.isAdmin) return { ...base, you: { isAdmin: true }, admin: { gameSettings: gameSettingsViews(hub) } };
   const me = hub.players[viewer?.playerId];
   return { ...base, you: me ? { id: me.id, name: me.name, score: 0, role: null } : null, round: null };
 }

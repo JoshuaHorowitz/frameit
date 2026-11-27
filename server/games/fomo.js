@@ -58,6 +58,8 @@ export function createState(config = {}, random = Math.random) {
     roundNumber: 0,
     players: {},
     settings: mergeSettings(DEFAULT_FOMO_SETTINGS, config.settings),
+    customPrompts: [...(config.customPrompts ?? [])], // prompts the admin added to the bank
+    removedPrompts: [...(config.removedPrompts ?? [])], // built-in prompts the admin deleted
     usedPrompts: [],
     round: null,
     notice: null,
@@ -67,7 +69,16 @@ export function createState(config = {}, random = Math.random) {
 }
 
 export function saveConfig(state) {
-  return { settings: state.settings };
+  return { settings: state.settings, customPrompts: state.customPrompts, removedPrompts: state.removedPrompts };
+}
+
+// Every prompt currently in play: built-ins the admin hasn't deleted, then added ones.
+export function promptBank(state) {
+  const removed = new Set(state.removedPrompts ?? []);
+  return [
+    ...FOMO_PROMPTS.filter((p) => !removed.has(p)).map((text) => ({ text, custom: false })),
+    ...(state.customPrompts ?? []).map((text) => ({ text, custom: true })),
+  ];
 }
 
 const playerList = (state) => Object.values(state.players);
@@ -78,10 +89,12 @@ const lowestScore = (state) => {
 };
 
 function drawPrompt(state, random) {
-  let pool = FOMO_PROMPTS.filter((p) => !state.usedPrompts.includes(p));
+  const all = promptBank(state).map((p) => p.text);
+  if (all.length === 0) return null; // the admin deleted every prompt
+  let pool = all.filter((p) => !state.usedPrompts.includes(p));
   if (pool.length === 0) {
     state.usedPrompts = [];
-    pool = FOMO_PROMPTS;
+    pool = all;
   }
   const prompt = pickOne(pool, random);
   state.usedPrompts.push(prompt);
@@ -191,7 +204,30 @@ const adminActions = {
     const prompt = cleanText(text, MAX_PROMPT);
     if (!prompt) fail('bad_prompt', 'Type a prompt first.');
     state.round.prompt = prompt;
-    state.round.customPrompt = !FOMO_PROMPTS.includes(prompt);
+    state.round.customPrompt = !promptBank(state).some((p) => p.text === prompt);
+    if (!state.usedPrompts.includes(prompt)) state.usedPrompts.push(prompt);
+  },
+
+  addPrompt(state, actor, { text }, now, random) {
+    const prompt = cleanText(text, MAX_PROMPT);
+    if (!prompt) fail('bad_prompt', 'Type a prompt first.');
+    if (!state.customPrompts.includes(prompt) && !FOMO_PROMPTS.includes(prompt)) state.customPrompts.push(prompt);
+    state.removedPrompts = state.removedPrompts.filter((p) => p !== prompt);
+    if (state.phase === P.SETUP && !state.round.prompt) state.round.prompt = drawPrompt(state, random);
+  },
+
+  // Delete a prompt: an added one is gone for good; a built-in one can be restored.
+  removePrompt(state, actor, { text }, now, random) {
+    if (state.customPrompts.includes(text)) state.customPrompts = state.customPrompts.filter((p) => p !== text);
+    else if (FOMO_PROMPTS.includes(text)) {
+      if (!state.removedPrompts.includes(text)) state.removedPrompts.push(text);
+    } else fail('bad_prompt', 'That prompt is not in the list.');
+    if (state.phase === P.SETUP && state.round.prompt === text) state.round.prompt = drawPrompt(state, random);
+  },
+
+  restorePrompts(state, actor, _payload, now, random) {
+    state.removedPrompts = [];
+    if (state.phase === P.SETUP && !state.round.prompt) state.round.prompt = drawPrompt(state, random);
   },
 
   setFaker(state, actor, { playerId }) {
@@ -204,7 +240,8 @@ const adminActions = {
     requirePhase(state, P.SETUP);
     const round = state.round;
     const active = activeIds(state);
-    if (active.length < 3) fail('not_enough_players', 'FOMO needs at least 3 players.');
+    // No minimum for testing; a round just needs someone to be the Faker.
+    if (active.length < 1) fail('not_enough_players', 'Someone needs to join first.');
     if (!round.prompt) fail('bad_prompt', 'Pick a prompt first.');
     const connected = active.filter((id) => state.players[id].connected);
     let fakerId = round.fakerChoice;
@@ -324,9 +361,10 @@ export function buildView(state, viewer) {
   };
 
   if (viewer?.isAdmin) {
-    const admin = { settings: state.settings };
+    const bank = promptBank(state);
+    const admin = { settings: state.settings, prompts: bank, removedBuiltIns: state.removedPrompts.length };
     if (phase === P.SETUP) {
-      admin.setup = { prompt: round.prompt, customPrompt: round.customPrompt, fakerChoice: round.fakerChoice, prompts: FOMO_PROMPTS };
+      admin.setup = { prompt: round.prompt, customPrompt: round.customPrompt, fakerChoice: round.fakerChoice, prompts: bank.map((p) => p.text) };
     } else if (phase === P.HINTS || phase === P.VOTING) {
       admin.live = {
         prompt: round.prompt,
